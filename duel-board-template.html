@@ -1,0 +1,224 @@
+<!-- ==================================================================
+  YU-GI-OH! DUEL BOARD: paste this into your chapter in HTML mode.
+  It needs the ao3-work-skin.css Work Skin to be selected on the work.
+  HOW TO READ THIS:
+  - This block is a comment, like every other block that starts with
+    an exclamation mark and two dashes. Readers never see comments
+    (AO3 removes them when you save).
+  - <div> and <span> are boxes. class="..." names the look from the CSS
+    file; one box can have several looks, separated by spaces, e.g.
+    class="ygo-card ygo-normal ygo-focus" = a card, Normal monster frame,
+    with the golden glow.
+  - &nbsp; is an invisible space. It keeps empty boxes from being
+    deleted by AO3.
+  - Don't leave blank lines inside the board: AO3 may turn them into
+    paragraph breaks.
+  QUICK CHEAT SHEET (full details in the CSS file):
+  Card frame: ygo-normal ygo-effect ygo-ritual ygo-fusion ygo-synchro
+              ygo-xyz ygo-link ygo-token ygo-spell ygo-trap
+  Face-down: ygo-back     Defense Position: add ygo-def
+  Glow: ygo-focus         EMZ owner ring: ygo-mine / ygo-theirs
+  Art colour: ygo-at-dark/light/earth/water/fire/wind/divine/spell/trap
+  LP bar: ygo-w0 ... ygo-w100 (LP divided by 80, nearest 5)
+  Real card pictures: ygo-pic (card on the field), ygo-pop (pop-up),
+              ygo-spot-img (info panel). Examples in Yugi's monster row
+              and the info panel below; details in section 13 of the CSS.
+  Hover info panel: ygo-spot ygo-hover inside a card (see Eternal Soul
+              and Monster Reborn; details in section 14 of the CSS).
+  The picture links below (https://example.com/...) are placeholders:
+  replace them with links to pictures you uploaded to an image host.
+=================================================================== -->
+<div class="ygo-duel">
+<!-- ========== OPPONENT'S PLATE (top right) ==========
+     ygo-bar-opp pushes it right; ygo-plate-opp gives the red theme.
+     Change the name, the LP number, and the ygo-w class on the bar. -->
+<div class="ygo-bar ygo-bar-opp"><div class="ygo-plate ygo-plate-opp">
+<span class="ygo-pname">Maximillion Pegasus</span>
+<span class="ygo-lp"><span class="ygo-lp-tag">LP</span> <span class="ygo-lp-num">7000</span></span>
+<span class="ygo-lp-track"><span class="ygo-lp-fill ygo-w90">&nbsp;</span></span>
+</div></div>
+<!-- ========== OPPONENT'S HAND ==========
+     One ygo-mini line per card. Add or delete lines to match,
+     and update the number in the pill. -->
+<div class="ygo-hand">
+<span class="ygo-mini ygo-back">&nbsp;</span>
+<span class="ygo-mini ygo-back">&nbsp;</span>
+<span class="ygo-hand-label">Hand: 2</span>
+</div>
+<!-- ========== THE FIELD ==========
+     A table: each <tr> is a row, each <td> is one zone.
+     Every row must keep exactly 7 <td> cells or the grid shifts.
+     The row's class sets the zone outline colour:
+     ygo-opp = red (opponent), ygo-mid = white, ygo-me = blue (you).
+     To put a card in a zone, replace that zone's <div class="ygo-zone">
+     with a card <div>; to empty it, put the ygo-zone back. -->
+<div class="ygo-scroll"><table class="ygo-field">
+<!-- ROW 1, opponent's back row: Deck | 5 Spell/Trap zones | Extra Deck.
+     (It's mirrored, because the opponent sits facing you.) -->
+<tr class="ygo-opp">
+<!-- A pile: big number = cards left, small label = which pile.
+     ygo-back = shows the card back. -->
+<td><div class="ygo-card ygo-back ygo-pile"><span class="ygo-count">32</span> <span class="ygo-plabel">Deck</span></div></td>
+<!-- Empty zones -->
+<td><div class="ygo-zone">&nbsp;</div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<td><div class="ygo-card ygo-back ygo-pile"><span class="ygo-count">1</span> <span class="ygo-plabel">Extra</span></div></td>
+</tr>
+<!-- ROW 2, opponent's front row: Graveyard | 5 Monster zones | Field zone -->
+<tr class="ygo-opp">
+<!-- Graveyard pile: instead of ygo-back, use the frame colour of the
+     card on top of the GY (here a Trap, so ygo-trap). -->
+<td><div class="ygo-card ygo-trap ygo-pile"><span class="ygo-count">6</span> <span class="ygo-plabel">GY</span></div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<!-- Text inside an empty zone shows as a faded label. -->
+<td><div class="ygo-zone">Field</div></td>
+</tr>
+<!-- ROW 3, the middle: blank | blank | left Extra Monster Zone | phase |
+     right Extra Monster Zone | blank | turn counter.
+     Blank cells just hold &nbsp; so the row still has 7 cells. -->
+<tr class="ygo-mid">
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<!-- A FACE-UP MONSTER. Three parts, top to bottom:
+     ygo-cname = name strip, ygo-art = picture box (attribute kanji;
+     its ygo-at class sets the colour), ygo-stats = ATK on top, DEF below.
+     ygo-mine adds a blue ring: in an Extra Monster Zone it shows the
+     card is Yugi's. -->
+<td><div class="ygo-card ygo-normal ygo-mine">
+<span class="ygo-cname">Dark Magician</span>
+<span class="ygo-art ygo-at-dark">闇</span>
+<span class="ygo-stats"><span class="ygo-a">ATK 2500</span> <span class="ygo-d">DEF 2100</span></span>
+</div></td>
+<!-- Current phase: DP, SP, MP1, BP, MP2 or EP. -->
+<td><span class="ygo-phase">MP1</span></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<td>&nbsp;</td>
+<!-- Turn counter: change the number. -->
+<td><span class="ygo-turn"><span class="ygo-turn-l">Turn</span> <span class="ygo-turn-n">3</span></span></td>
+</tr>
+<!-- ROW 4, your front row: Field zone | 5 Monster zones | Graveyard -->
+<tr class="ygo-me">
+<td><div class="ygo-zone">Field</div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<!-- A REAL CARD PICTURE ON THE FIELD (ygo-pic): the <img> replaces the
+     name strip and picture box; the stats strip sits over its bottom.
+     ygo-focus = golden glow: the card the scene is about
+     (it's the one shown in the info panel at the bottom).
+     The ygo-pop line makes the same picture pop up big when pointed at,
+     because the small one is hard to read. -->
+<td><div class="ygo-card ygo-pic ygo-focus">
+<img src="https://example.com/dark-magician.png" alt="Dark Magician" width="66">
+<span class="ygo-stats"><span class="ygo-a">ATK 2500</span> <span class="ygo-d">DEF 2100</span></span>
+<span class="ygo-pop"><img src="https://example.com/dark-magician.png" alt="Dark Magician card" width="100"></span>
+</div></td>
+<!-- A DRAWN CARD WITH A POP-UP: the normal drawn card, plus a ygo-pop
+     line at the end, so pointing at it shows the real card.
+     To show this one in Defense Position, change its first line to
+     <div class="ygo-card ygo-normal ygo-def"> -->
+<td><div class="ygo-card ygo-normal">
+<span class="ygo-cname">Dark Magician</span>
+<span class="ygo-art ygo-at-dark">闇</span>
+<span class="ygo-stats"><span class="ygo-a">ATK 2500</span> <span class="ygo-d">DEF 2100</span></span>
+<span class="ygo-pop"><img src="https://example.com/dark-magician.png" alt="Dark Magician card" width="100"></span>
+</div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<!-- Your GY: top card is a Spell, so ygo-spell. -->
+<td><div class="ygo-card ygo-spell ygo-pile"><span class="ygo-count">1</span> <span class="ygo-plabel">GY</span></div></td>
+</tr>
+<!-- ROW 5, your back row: Extra Deck | 5 Spell/Trap zones | Deck -->
+<tr class="ygo-me">
+<td><div class="ygo-card ygo-back ygo-pile"><span class="ygo-count">5</span> <span class="ygo-plabel">Extra</span></div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<!-- A FACE-UP TRAP. Same three parts as a monster, but the stats strip
+     says the card type (TRAP) and kind (Normal, Cont., Counter).
+     Keep the kind short: long words get cut off on phones.
+     The last part is a HOVER INFO PANEL (ygo-spot ygo-hover): hidden
+     until the reader points at this card, then it covers the info
+     panel at the bottom of the board. It uses the same parts as the
+     main info panel (see the CARD INFO PANEL notes further down);
+     a Spell/Trap just skips the level and ATK/DEF lines. -->
+<td><div class="ygo-card ygo-trap">
+<span class="ygo-cname">Eternal Soul</span>
+<span class="ygo-art ygo-at-trap">罠</span>
+<span class="ygo-stats"><span class="ygo-a">TRAP</span> <span class="ygo-d">Cont.</span></span>
+<div class="ygo-spot ygo-hover">
+<span class="ygo-spot-top"><span class="ygo-attr ygo-at-trap">罠 TRAP</span></span>
+<span class="ygo-spot-name">Eternal Soul</span>
+<span class="ygo-spot-type">[Continuous Trap]</span>
+<span class="ygo-spot-text">Every "Dark Magician" in your Monster Zone is unaffected by your opponent's card effects. If this face-up card leaves the field: Destroy all monsters you control. You can only use the following effect of "Eternal Soul" once per turn. You can activate 1 of these effects; ● Special Summon 1 "Dark Magician" from your hand or GY. ● Add 1 "Dark Magic Attack" or "Thousand Knives" from your Deck to your hand.</span>
+</div>
+</div></td>
+<!-- A SET (face-down) card: just ygo-back with nothing inside.
+     For a set monster in Defense Position, add ygo-def. -->
+<td><div class="ygo-card ygo-back">&nbsp;</div></td>
+<!-- A FACE-UP SPELL (kinds: Normal, Cont., Quick, Field, Equip, Ritual),
+     also with a hover info panel. You can add a picture to a hover
+     panel too: put a ygo-spot-img line first, like in the main panel. -->
+<td><div class="ygo-card ygo-spell">
+<span class="ygo-cname">Monster Reborn</span>
+<span class="ygo-art ygo-at-spell">魔</span>
+<span class="ygo-stats"><span class="ygo-a">SPELL</span> <span class="ygo-d">Normal</span></span>
+<div class="ygo-spot ygo-hover">
+<span class="ygo-spot-top"><span class="ygo-attr ygo-at-spell">魔 SPELL</span></span>
+<span class="ygo-spot-name">Monster Reborn</span>
+<span class="ygo-spot-type">[Normal Spell]</span>
+<span class="ygo-spot-text">Target 1 monster in either GY; Special Summon it.</span>
+</div>
+</div></td>
+<td><div class="ygo-zone">&nbsp;</div></td>
+<td><div class="ygo-card ygo-back ygo-pile"><span class="ygo-count">32</span> <span class="ygo-plabel">Deck</span></div></td>
+</tr>
+</table></div>
+<!-- ========== YOUR HAND ==========
+     Face-down backs here; to show a card face-up, swap ygo-back for its
+     frame colour, e.g. <span class="ygo-mini ygo-spell">&nbsp;</span> -->
+<div class="ygo-hand">
+<span class="ygo-mini ygo-back">&nbsp;</span>
+<span class="ygo-mini ygo-back">&nbsp;</span>
+<span class="ygo-mini ygo-back">&nbsp;</span>
+<span class="ygo-mini ygo-back">&nbsp;</span>
+<span class="ygo-mini ygo-back">&nbsp;</span>
+<span class="ygo-mini ygo-back">&nbsp;</span>
+<span class="ygo-hand-label">Hand: 6</span>
+</div>
+<!-- ========== YOUR PLATE (bottom left) ==========
+     No ygo-bar-opp, so it stays on the left; ygo-plate-me = blue theme. -->
+<div class="ygo-bar"><div class="ygo-plate ygo-plate-me">
+<span class="ygo-pname">Yami Yugi</span>
+<span class="ygo-lp"><span class="ygo-lp-tag">LP</span> <span class="ygo-lp-num">8000</span></span>
+<span class="ygo-lp-track"><span class="ygo-lp-fill ygo-w100">&nbsp;</span></span>
+</div></div>
+<!-- ========== CARD INFO PANEL ==========
+     Details of the highlighted card: what shows when the reader isn't
+     pointing at anything. Cards with a hover panel cover it while
+     pointed at, so keep this block if any card has one. It also works
+     on its own outside the board. -->
+<div class="ygo-spot">
+<!-- Optional card picture on the left of the panel. Delete this line
+     to have text only. -->
+<span class="ygo-spot-img"><img src="https://example.com/dark-magician.png" alt="Dark Magician card" width="110"></span>
+<!-- Level: the number after ×. For Xyz say "Rank 4", for Link
+     "Link-3". Attribute badge: kanji + name, coloured by its ygo-at class. -->
+<span class="ygo-spot-top"><span class="ygo-lvl">★</span> ×7 <span class="ygo-attr ygo-at-dark">闇 DARK</span></span>
+<span class="ygo-spot-stats"><span class="ygo-s-atk">ATK 2500</span> <span class="ygo-s-def">DEF 2100</span></span>
+<span class="ygo-spot-name">Dark Magician</span>
+<span class="ygo-spot-type">[Spellcaster / Normal]</span>
+<span class="ygo-spot-text">The ultimate wizard in terms of attack and defense.</span>
+</div>
+</div>
+<!-- ========== DUEL LOG LINE (outside the board) ==========
+     Drop one of these into the story for attacks and damage.
+     First line = what happened; then the LP change; ygo-delta = the amount.
+     For healing, use class="ygo-log ygo-log-heal" to turn it green. -->
+<div class="ygo-log">
+<span class="ygo-log-act">⚔ Dark Magician attacks directly!</span>
+Pegasus LP 7000 → 4500 <span class="ygo-delta">−2500</span>
+</div>

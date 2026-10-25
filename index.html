@@ -1,0 +1,1860 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Duel Board Builder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;500&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+<style>
+/* Workbench layout: editor rail on the left, live board and AO3 code on the right; one column on phones. */
+:root {
+  --bg: #e8ecf3;
+  --panel: #ffffff;
+  --panel-2: #f3f5f9;
+  --ink: #18202f;
+  --muted: #566078;
+  --line: #d1d8e4;
+  --accent: #3346b8;
+  --accent-ink: #ffffff;
+  --sel: #d99a00;
+  --ok: #1d7a3b;
+  --bad: #b3261e;
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "Nunito Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f131b; --panel: #171d29; --panel-2: #1e2533; --ink: #e7ebf3; --muted: #9aa4b8;
+    --line: #2c3547; --accent: #8e9dff; --accent-ink: #0f131b; --sel: #ffd84a; --ok: #6fd38e; --bad: #ff8f85;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f131b; --panel: #171d29; --panel-2: #1e2533; --ink: #e7ebf3; --muted: #9aa4b8;
+  --line: #2c3547; --accent: #8e9dff; --accent-ink: #0f131b; --sel: #ffd84a; --ok: #6fd38e; --bad: #ff8f85;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 var(--f-body);
+}
+.page {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 16px;
+}
+
+/* ---------- Header ---------- */
+.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+.top h1 {
+  margin: 0;
+  font: 700 2.4rem/1 var(--f-display);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+.top h1 span { color: var(--accent); }
+.top p { margin: 4px 0 0; color: var(--muted); max-width: 60ch; }
+.top-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- Panels ---------- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  min-width: 0;
+}
+.panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  font: 700 1.35rem/1.1 var(--f-display);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.panel h3 {
+  margin: 0 0 10px;
+  font: 700 1.1rem/1.1 var(--f-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.step-no {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.9em;
+}
+.panel > p:first-of-type { margin-top: 0; }
+.muted { color: var(--muted); }
+
+.skin-step { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 24px; align-items: start; }
+.skin-step ol { margin: 0; padding-left: 1.3em; }
+.skin-step ol li + li { margin-top: 2px; }
+.skin-step .actions { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+@media (max-width: 700px) { .skin-step { grid-template-columns: minmax(0, 1fr); } .skin-step .actions { flex-direction: row; flex-wrap: wrap; } }
+
+.work {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 390px) minmax(0, 1fr);
+  grid-template-areas: "edit board" "edit code";
+  align-items: start;
+}
+.col-edit { grid-area: edit; display: grid; gap: 16px; min-width: 0; }
+.board-panel { grid-area: board; }
+.code-panel { grid-area: code; }
+@media (max-width: 900px) {
+  .work { grid-template-columns: minmax(0, 1fr); grid-template-areas: "board" "edit" "code"; }
+}
+
+/* ---------- Form controls ---------- */
+.field { display: grid; gap: 4px; margin-bottom: 12px; min-width: 0; }
+.field > label, .legend { font-weight: 700; font-size: 0.86rem; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 10px; }
+.row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 10px; }
+input[type="text"], input[type="number"], input[type="url"], select, textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+}
+textarea { resize: vertical; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, td[data-z]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+input:disabled + span { opacity: 0.5; }
+.inline { display: flex; gap: 8px; }
+.inline input { flex: 1; min-width: 0; }
+
+.checks { display: grid; gap: 8px; margin-bottom: 12px; }
+.check { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: start; font-size: 0.92rem; cursor: pointer; }
+.check input { margin: 3px 0 0; width: 16px; height: 16px; accent-color: var(--accent); }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.seg label { position: relative; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.seg span { display: block; padding: 6px 14px; font-size: 0.9rem; font-weight: 600; background: var(--panel-2); }
+.seg label + label span { border-left: 1px solid var(--line); }
+.seg input:checked + span { background: var(--accent); color: var(--accent-ink); }
+.seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -3px; }
+
+.btn, .btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 7px;
+  font: 600 0.92rem/1.2 var(--f-body);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn { background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
+.btn:hover { filter: brightness(1.08); }
+.btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn-ghost:hover { border-color: var(--accent); }
+.btn-ghost.danger { color: var(--bad); }
+.btn-ghost:disabled { opacity: 0.45; cursor: default; border-color: var(--line); }
+
+.hint { margin: 0; font-size: 0.84rem; color: var(--muted); }
+.hint.ok { color: var(--ok); }
+.hint.bad { color: var(--bad); }
+.empty-note { margin: 0; color: var(--muted); }
+.zone-title {
+  margin: 0 0 12px;
+  padding: 6px 10px;
+  border-left: 4px solid var(--sel);
+  background: var(--panel-2);
+  border-radius: 0 6px 6px 0;
+  font-weight: 700;
+}
+
+.lookup-out { display: grid; gap: 6px; }
+.lookup-out:empty { display: none; }
+.results { display: grid; gap: 4px; max-height: 260px; overflow: auto; }
+.result {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+.result span { color: var(--muted); font-size: 0.82rem; white-space: nowrap; }
+.result:hover { border-color: var(--accent); }
+.lookup-out a, .hint a { color: var(--accent); }
+
+.pic-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: start; }
+.pic-row img { width: 56px; height: auto; border-radius: 3px; border: 1px solid var(--line); }
+
+/* ---------- Preview ---------- */
+.board-panel .hint { margin-bottom: 8px; }
+.preview { min-width: 0; }
+.preview .ygo-duel { margin-top: 0; }
+#workskin td[data-z] { cursor: pointer; border-radius: 6px; }
+#workskin td[data-z]:hover { background: rgba(255, 255, 255, 0.1); }
+#workskin td.is-sel { outline: 3px solid var(--sel); outline-offset: -2px; background: rgba(255, 216, 74, 0.15); }
+#workskin [data-h] { cursor: pointer; }
+#workskin .ygo-mini.is-sel { outline: 3px solid var(--sel); outline-offset: 2px; }
+#workskin [data-h]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Code output ---------- */
+.code-panel ol { margin: 0 0 12px; padding-left: 1.3em; }
+.code-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.status { font-size: 0.86rem; color: var(--ok); font-weight: 600; }
+textarea.code {
+  height: 220px;
+  font: 0.78rem/1.45 var(--f-mono);
+  white-space: pre;
+  overflow: auto;
+}
+details { margin-top: 12px; }
+summary { cursor: pointer; font-weight: 700; }
+details[open] summary { margin-bottom: 8px; }
+.log-preview .ygo-log { margin: 0 0 10px; }
+</style>
+</head>
+<body>
+
+
+<script type="text/plain" id="skin-css">/* =====================================================================
+   YU-GI-OH! DUEL BOARD — AO3 Work Skin
+
+   HOW TO INSTALL
+   AO3 Dashboard → Skins → My Work Skins → Create Work Skin, paste this
+   whole file, save. Then on your work's Edit page pick it under
+   "Select Work Skin". AO3 quietly adds "#workskin" in front of every
+   rule, so these styles only ever touch your own story.
+
+   HOW TO READ THIS FILE (a 30-second CSS primer)
+   - Anything between slash-star and star-slash, like this text, is a
+     comment. The browser ignores it; it's only here for you.
+   - A rule looks like:   .ygo-card { color: red; }
+       .ygo-card   = "every element whose class is ygo-card"
+                     (in the HTML that's  class="ygo-card")
+       { ... }     = the list of looks to give those elements
+       color: red; = one look: a "property" and its "value"
+   - ".ygo-def .ygo-art" (two names with a space) means "a ygo-art that
+     sits INSIDE a ygo-def". ".ygo-back.ygo-def" (no space) means "one
+     element that has BOTH classes".
+   - Every class here starts with "ygo-" so it can't clash with AO3's
+     own class names.
+
+   UNITS YOU'LL SEE
+   - em  = relative to the current text size. 1em = one letter-height.
+           Because the whole board is sized in em, it grows and shrinks
+           with the reader's chosen font size.
+   - %   = a share of the space available (50% = half as wide).
+   - px  = a fixed screen pixel. Used only for thin lines.
+
+   COLOURS
+   - #ffd84a is a hex colour (red-green-blue). rgba(0, 0, 0, 0.5) is
+     red, green, blue, then opacity: 0 = invisible, 1 = solid.
+   - Many rules set "background" twice: first a plain colour, then a
+     gradient. Browsers use the last one they understand, so the plain
+     colour is a safety net if a gradient ever isn't supported.
+   ===================================================================== */
+
+
+/* =====================================================================
+   1. THE BOARD FRAME
+   The green "grass" box that holds everything. In the HTML it's the
+   outermost <div class="ygo-duel">.
+   ===================================================================== */
+.ygo-duel {
+  margin: 1.5em auto;               /* space above/below; "auto" centres it */
+  max-width: 46em;                  /* never wider than this on big screens */
+  padding: 0.5em;                   /* gap between the green edge and the contents */
+  background: #5f9c45;              /* plain green (safety net) */
+  background: linear-gradient(#78b657, #4f8a39);  /* lighter green fading to darker */
+  border: 3px solid #35612a;        /* dark green outline */
+  border-radius: 0.6em;             /* rounded corners */
+  color: #fff;                      /* default text colour: white */
+  font-family: "Trebuchet MS", "Segoe UI", Verdana, Arial, sans-serif;  /* first font the reader has wins */
+  line-height: 1.2;                 /* tighter line spacing than story text */
+  text-align: left;
+  position: relative;               /* card pop-ups (section 13) are placed relative to this box */
+}
+
+/* AO3 sometimes slips extra line breaks (<br>) and paragraphs (<p>) into
+   pasted HTML. These two rules make them invisible and spaceless inside
+   the board, the card panel and the log box, so they can't break the layout. */
+.ygo-duel br, .ygo-spot br, .ygo-log br { display: none; }
+.ygo-duel p, .ygo-spot p, .ygo-log p { margin: 0; padding: 0; }
+
+
+/* =====================================================================
+   2. PLAYER PLATES (name + Life Points)
+   Pegasus's plate sits top-right, Yugi's bottom-left, like in the game.
+   ===================================================================== */
+
+/* The strip each plate sits in. */
+.ygo-bar { margin: 0.2em 0 0.4em; text-align: left; }
+/* Add ygo-bar-opp to push the plate to the right (opponent's side). */
+.ygo-bar-opp { text-align: right; }
+
+/* The dark box itself. */
+.ygo-plate {
+  display: inline-block;            /* only as wide as it needs, so it can sit left or right */
+  min-width: 13em;
+  padding: 0.3em 0.6em 0.45em;      /* top, sides, bottom */
+  text-align: left;
+  border-radius: 0.4em;
+  box-shadow: 0 0.15em 0.3em rgba(0, 0, 0, 0.45);  /* soft drop shadow underneath */
+}
+/* Colour themes: red-bordered for the opponent, blue for the hero. */
+.ygo-plate-opp { background: #4a2418; border: 2px solid #d9534f; }
+.ygo-plate-me { background: #1b2f63; border: 2px solid #4f86e8; }
+
+/* Duelist's name. */
+.ygo-pname {
+  display: block;                   /* own line */
+  margin-bottom: 0.1em;
+  font-weight: bold;
+  font-size: 1.05em;
+  text-shadow: 1px 1px 0 #000;      /* thin black shadow so it pops */
+}
+
+/* The line holding the "LP" tag and the number. */
+.ygo-lp { display: block; }
+
+/* The little red "LP" tag. */
+.ygo-lp-tag {
+  display: inline-block;
+  margin-right: 0.4em;
+  padding: 0 0.3em;
+  background: #c0392b;
+  color: #ffe066;
+  font-weight: bold;
+  font-size: 0.8em;
+  border-radius: 0.2em;
+  vertical-align: middle;           /* line it up with the big number */
+}
+
+/* The big gold Life Points number. The four text-shadows draw a brown
+   outline around each digit; the fifth adds a drop shadow. */
+.ygo-lp-num {
+  font-size: 1.7em;
+  font-weight: bold;
+  letter-spacing: 0.03em;
+  color: #ffd84a;
+  text-shadow: 1px 1px 0 #6b3a00, -1px -1px 0 #6b3a00, 1px -1px 0 #6b3a00, -1px 1px 0 #6b3a00, 0 2px 2px #000;
+  vertical-align: middle;
+}
+
+/* The LP bar is two pieces: a dark "track" (the empty bar)... */
+.ygo-lp-track {
+  display: block;
+  height: 6px;
+  margin-top: 0.25em;
+  background: #111;
+  border-radius: 3px;
+  overflow: hidden;                 /* clip the fill to the rounded ends */
+  font-size: 0;                     /* hide the invisible space character inside */
+  line-height: 0;
+}
+/* ...and a coloured "fill" inside it. Its width comes from a ygo-w class below.
+   The gradient runs red → gold → green, so a low bar looks red and a full one
+   reaches green, like in the game. */
+.ygo-lp-fill {
+  display: block;
+  height: 6px;
+  background: #e8c13a;
+  background: linear-gradient(to right, #d6332a, #f2c230, #4cc94a);
+}
+
+/* How full the LP bar is. Pick the class on the fill:
+   LP ÷ 80, rounded to the nearest 5.
+   8000 → ygo-w100,  4000 → ygo-w50,  7000 → 87.5 → ygo-w90,  0 → ygo-w0.
+   (AO3 doesn't allow per-element styles, so we need one class per size.) */
+.ygo-w0 { width: 0; }      .ygo-w5 { width: 5%; }     .ygo-w10 { width: 10%; }
+.ygo-w15 { width: 15%; }   .ygo-w20 { width: 20%; }   .ygo-w25 { width: 25%; }
+.ygo-w30 { width: 30%; }   .ygo-w35 { width: 35%; }   .ygo-w40 { width: 40%; }
+.ygo-w45 { width: 45%; }   .ygo-w50 { width: 50%; }   .ygo-w55 { width: 55%; }
+.ygo-w60 { width: 60%; }   .ygo-w65 { width: 65%; }   .ygo-w70 { width: 70%; }
+.ygo-w75 { width: 75%; }   .ygo-w80 { width: 80%; }   .ygo-w85 { width: 85%; }
+.ygo-w90 { width: 90%; }   .ygo-w95 { width: 95%; }   .ygo-w100 { width: 100%; }
+
+
+/* =====================================================================
+   3. HANDS
+   A centred row of small card backs plus a "Hand: N" pill.
+   ===================================================================== */
+.ygo-hand { margin: 0.3em 0; text-align: center; }
+
+/* One small card in a hand. Combine with ygo-back for a face-down card
+   (see section 6), or with a frame colour like ygo-spell to show it face-up. */
+.ygo-mini {
+  display: inline-block;            /* sit side by side in a row */
+  width: 1.5em;
+  height: 2.2em;
+  margin: 0 0.12em;                 /* small gap between cards */
+  vertical-align: middle;
+  border-radius: 0.15em;
+  box-shadow: 0 0.1em 0.2em rgba(0, 0, 0, 0.45);
+  font-size: 1em;
+}
+
+/* The dark rounded "Hand: 6" pill. */
+.ygo-hand-label {
+  display: inline-block;
+  margin-left: 0.5em;
+  padding: 0.1em 0.5em;
+  vertical-align: middle;
+  background: rgba(0, 0, 0, 0.35);  /* see-through black */
+  border-radius: 1em;               /* fully rounded ends */
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+
+/* =====================================================================
+   4. THE FIELD
+   The brown mat. In the HTML it's a <table> with 5 rows and 7 columns:
+     row 1: opponent's Deck | 5 Spell/Trap zones | Extra Deck
+     row 2: opponent's GY   | 5 Monster zones    | Field zone
+     row 3: Extra Monster Zones, phase badge, turn badge
+     row 4: your Field zone | 5 Monster zones    | GY
+     row 5: your Extra Deck | 5 Spell/Trap zones | Deck
+   A table is used because AO3 keeps tables intact, so the grid can't fall apart.
+   ===================================================================== */
+
+/* Lets the board scroll sideways inside its frame on very narrow phones,
+   instead of squashing the cards or stretching the page. */
+.ygo-scroll { overflow: auto; }
+
+.ygo-field {
+  width: 100%;
+  min-width: 34em;                  /* below this the board scrolls instead of shrinking */
+  margin: 0;
+  table-layout: fixed;              /* all 7 columns stay the same width */
+  border-collapse: separate;        /* needed for the rounded corners to show */
+  border-spacing: 0;
+  background: #6b5241;
+  background: linear-gradient(#5a4334, #7a5e49 50%, #5a4334);  /* darker at the edges */
+  border: 2px solid #3d2a1e;
+  border-radius: 0.4em;
+  font-size: 0.65em;                /* shrinks everything on the mat; every card size below is relative to this */
+}
+
+/* Every cell (one zone each). The first three lines undo AO3's own table
+   styling (grey borders, backgrounds), which would otherwise show through. */
+.ygo-field td, .ygo-field th {
+  width: 14.28%;                    /* 100% ÷ 7 columns */
+  padding: 0.35em 0.2em;            /* gap around each card: top/bottom, left/right */
+  border: none;
+  background: none;
+  text-align: center;
+  vertical-align: middle;
+}
+/* Extra breathing room above and below the middle (Extra Monster Zone) row. */
+.ygo-mid td { padding-top: 0.7em; padding-bottom: 0.7em; }
+
+/* An EMPTY zone: a faint card-sized outline. Any text inside (like "Field")
+   shows as a faded label in the middle. */
+.ygo-zone {
+  display: block;
+  max-width: 6.6em;                 /* same size as a card (section 5) */
+  height: 9.6em;
+  margin: 0 auto;                   /* centre it in the cell */
+  line-height: 9.6em;               /* line as tall as the box = text sits in the middle */
+  border: 0.18em solid rgba(255, 255, 255, 0.45);
+  border-radius: 0.3em;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: bold;
+  text-transform: uppercase;        /* "Field" shows as "FIELD" */
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+/* Zone outline colours depend on the row's class:
+   ygo-opp = opponent's rows (red), ygo-me = your rows (blue),
+   ygo-mid = the shared middle row (white). */
+.ygo-opp .ygo-zone { border-color: #e06a63; background: rgba(255, 190, 190, 0.18); }
+.ygo-me .ygo-zone { border-color: #5a8fee; background: rgba(190, 215, 255, 0.18); }
+.ygo-mid .ygo-zone { border-color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.22); }
+
+
+/* =====================================================================
+   5. CARDS
+   A face-up card is a ygo-card box holding three stacked parts:
+     ygo-cname  the name strip at the top
+     ygo-art    the picture box (shows the attribute kanji, e.g. 闇)
+     ygo-stats  the dark strip with ATK/DEF (or SPELL/TRAP + its type)
+   Its frame colour comes from a second class, e.g. "ygo-card ygo-effect".
+   ===================================================================== */
+.ygo-card {
+  display: block;
+  max-width: 6.6em;                 /* roughly real card proportions: 6.6 wide... */
+  height: 9.6em;                    /* ...by 9.6 tall */
+  margin: 0 auto;                   /* centre it in its zone */
+  padding: 0.25em;                  /* the coloured frame around the parts */
+  overflow: hidden;                 /* anything too big gets clipped, not spilled */
+  border: 1px solid #1a1a1a;
+  border-radius: 0.25em;
+  background: #ccc;                 /* grey until a frame colour class is added */
+  color: #1a1a1a;                   /* dark text on light frames */
+  text-align: left;
+  box-shadow: 0 0.15em 0.3em rgba(0, 0, 0, 0.5);  /* card casts a shadow on the mat */
+}
+
+/* Frame colours — one per card type, matching the real cards.
+   Each one is a top-to-bottom gradient for a slightly shiny look. */
+.ygo-normal { background: #e2c07a; background: linear-gradient(#f0d394, #c49a4c); }   /* Normal monster: yellow-tan */
+.ygo-effect { background: #d9783a; background: linear-gradient(#ec9256, #b4561f); }   /* Effect monster: orange */
+.ygo-ritual { background: #6b8fd8; background: linear-gradient(#89a8e8, #4a6cc0); }   /* Ritual: blue */
+.ygo-fusion { background: #9a62b8; background: linear-gradient(#b180cc, #74418f); }   /* Fusion: purple */
+.ygo-synchro { background: #ececec; background: linear-gradient(#ffffff, #c4c4c4); }  /* Synchro: white */
+.ygo-xyz { background: #2b2b2b; background: linear-gradient(#4a4a4a, #141414); color: #f1f1f1; }  /* Xyz: black, light text */
+.ygo-link { background: #1f5aa6; background: linear-gradient(#2f72c4, #123c74); color: #f1f1f1; } /* Link: dark blue, light text */
+.ygo-token { background: #b9b9b9; background: linear-gradient(#d6d6d6, #9a9a9a); }    /* Token: grey */
+.ygo-spell { background: #1f9e88; background: linear-gradient(#35b9a1, #127262); }    /* Spell: teal */
+.ygo-trap { background: #bf3f86; background: linear-gradient(#d6609f, #922863); }     /* Trap: magenta */
+
+/* Name strip. Fits two lines of text; a longer name is cut off. */
+.ygo-cname {
+  display: block;
+  height: 2.2em;                    /* two lines × 1.1 line height */
+  overflow: hidden;
+  padding: 0.1em 0.2em;
+  background: rgba(255, 255, 255, 0.45);  /* pale see-through strip over the frame colour */
+  border-radius: 0.15em;
+  font-size: 0.8em;
+  line-height: 1.1;
+  font-weight: bold;
+}
+/* On dark frames (Xyz, Link) the strip goes dark instead, to keep the white text readable. */
+.ygo-xyz .ygo-cname, .ygo-link .ygo-cname { background: rgba(0, 0, 0, 0.35); }
+
+/* Picture box. Its colour comes from an attribute class (section 7).
+   font-size 2em makes the kanji big; height and line-height are equal so the
+   kanji sits in the vertical middle. */
+.ygo-art {
+  display: block;
+  height: 2.6em;
+  margin: 0.1em 0;
+  overflow: hidden;
+  background: #333;
+  background: radial-gradient(circle, #5a5a5a, #1b1b1b);  /* grey glow, used if no attribute class is given */
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 2em;
+  line-height: 2.6em;
+  text-align: center;
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9);
+}
+/* Optional: put <img src="..."> inside ygo-art to show just the artwork (a
+   cropped picture) in the picture box. For whole card pictures, see section 13. */
+.ygo-art img { display: block; width: 100%; height: 100%; }
+
+/* The dark ATK/DEF strip at the bottom of the card. */
+.ygo-stats {
+  display: block;
+  padding: 0.1em 0.25em;
+  background: rgba(0, 0, 0, 0.72);
+  border-radius: 0.15em;
+  color: #fff;
+  font-size: 0.76em;
+  line-height: 1.2;
+  font-weight: bold;
+  white-space: nowrap;              /* never wrap "ATK 2500" onto two lines */
+  overflow: hidden;
+}
+/* ygo-a = the top line (ATK), ygo-d = the bottom line (DEF).
+   In Attack Position, ATK is bright gold and DEF is faded, like in the game. */
+.ygo-a, .ygo-d { display: block; }
+.ygo-a { color: #ffd84a; }
+.ygo-d { color: rgba(255, 255, 255, 0.45); }
+/* On Spells/Traps the same two lines say e.g. "SPELL" / "Normal", so both stay plain white. */
+.ygo-spell .ygo-a, .ygo-trap .ygo-a { color: #fff; }
+.ygo-spell .ygo-d, .ygo-trap .ygo-d { color: rgba(255, 255, 255, 0.75); }
+
+
+/* =====================================================================
+   6. DEFENSE POSITION AND FACE-DOWN CARDS
+   ===================================================================== */
+
+/* Add ygo-def to a card to lay it sideways (Defense Position):
+   the box becomes wide and short, the picture moves to the left half,
+   and the stats move to the right half. DEF turns bright, ATK fades. */
+.ygo-def { max-width: 9.6em; height: 6.6em; }                 /* width and height swapped */
+.ygo-def .ygo-cname { height: 1.1em; white-space: nowrap; }   /* name on one line only */
+.ygo-def .ygo-art { float: left; width: 45%; height: 1.9em; line-height: 1.9em; }  /* "float: left" = sit on the left, let the next part sit beside it */
+.ygo-def .ygo-stats { margin: 0.6em 0 0 50%; }                /* start halfway across, beside the picture */
+.ygo-def .ygo-a { color: rgba(255, 255, 255, 0.45); }
+.ygo-def .ygo-d { color: #9fd0ff; }
+
+/* While the pointer is over any card, a thin yellow outline marks it,
+   like the cursor in the game. */
+.ygo-card:hover { outline: 2px solid #fff36b; }
+
+/* Add ygo-back for a face-down card: set Spell/Trap, set monster, the Deck,
+   the Extra Deck or a card in hand. The ring-shaped gradient draws the brown
+   card-back with the black vortex in the middle. */
+.ygo-back {
+  padding: 0;
+  height: 9.5em;                    /* a hair shorter, because its border is thicker than a normal card's */
+  background: #4a2a12;
+  background: radial-gradient(circle, #000 0, #000 16%, #2a1406 24%, #6e3b15 44%, #3a1c08 58%, #8a5222 100%);
+  border: 0.3em solid #7a4a1f;
+}
+/* Face-down AND sideways = a set monster in Defense Position. */
+.ygo-back.ygo-def { height: 6.5em; }
+/* Face-down in hand: same back, thinner border to suit the tiny size. */
+.ygo-mini.ygo-back { height: 2.2em; border-width: 0.15em; }
+
+
+/* =====================================================================
+   7. ATTRIBUTE COLOURS
+   Put one of these on a ygo-art box (picture colour) or on a ygo-attr
+   badge in the card panel. Matching kanji:
+     DARK 闇   LIGHT 光   EARTH 地   WATER 水   FIRE 炎   WIND 風
+     DIVINE 神   Spell 魔   Trap 罠
+   Each is a glow: bright in the centre, dark at the edges.
+   ===================================================================== */
+.ygo-at-dark { background: #3a2250; background: radial-gradient(circle, #7a4aa6, #1e0f2d); }
+.ygo-at-light { background: #b8962a; background: radial-gradient(circle, #fff1a8, #a07a12); }
+.ygo-at-earth { background: #6b4b2a; background: radial-gradient(circle, #a77c4c, #3f2a14); }
+.ygo-at-water { background: #1f5f9e; background: radial-gradient(circle, #5aa6e8, #0f3360); }
+.ygo-at-fire { background: #a8321e; background: radial-gradient(circle, #f07a3c, #5e1408); }
+.ygo-at-wind { background: #2f7d3a; background: radial-gradient(circle, #7ed27a, #174a1d); }
+.ygo-at-divine { background: #9b7a1a; background: radial-gradient(circle, #ffe9a0, #7a5a0a); }
+.ygo-at-spell { background: #0f5a4d; background: radial-gradient(circle, #3fc4aa, #0b3f36); }
+.ygo-at-trap { background: #6a1846; background: radial-gradient(circle, #e070b0, #4a0d30); }
+
+
+/* =====================================================================
+   8. PILES (Deck, Extra Deck, Graveyard)
+   A pile is a card with ygo-pile added, holding a big number (ygo-count)
+   and a small label (ygo-plabel). Use ygo-back for the Deck / Extra Deck,
+   or the top card's frame colour for the GY (e.g. ygo-trap).
+   ===================================================================== */
+
+/* Two offset shadows behind the card make it look like a stack. */
+.ygo-pile { text-align: center; box-shadow: 0.12em 0.15em 0 #2a1a0e, 0.24em 0.3em 0 #1d120a, 0 0.3em 0.5em rgba(0, 0, 0, 0.5); }
+
+/* The big white number, with a black outline (four shadows) so it shows on any colour. */
+.ygo-count {
+  display: block;
+  margin-top: 1.25em;               /* pushes the number down to about the middle of the card */
+  color: #fff;
+  font-size: 2.4em;
+  line-height: 1;
+  font-weight: bold;
+  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+}
+/* The small "DECK" / "GY" / "EXTRA" label under it. */
+.ygo-plabel {
+  display: block;
+  margin-top: 0.4em;
+  color: #fff;
+  font-size: 0.75em;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 1px 1px 0 #000;
+}
+
+
+/* =====================================================================
+   9. HIGHLIGHTS
+   Extra classes you can add to any card.
+   ===================================================================== */
+
+/* Extra Monster Zone cards can belong to either duelist, so add one of
+   these to show whose it is: a blue ring (yours) or a red ring (theirs). */
+.ygo-mine { box-shadow: 0 0 0 0.2em #4f86e8, 0 0.15em 0.3em rgba(0, 0, 0, 0.5); }
+.ygo-theirs { box-shadow: 0 0 0 0.2em #e06a63, 0 0.15em 0.3em rgba(0, 0, 0, 0.5); }
+
+/* Golden glow on the card the scene is about (like the game's cursor).
+   First shadow = solid yellow ring, second = soft blurred glow. */
+.ygo-focus { box-shadow: 0 0 0 0.2em #fff36b, 0 0 1em 0.3em #ffd400; }
+
+
+/* =====================================================================
+   10. PHASE AND TURN BADGES (middle row of the field)
+   ===================================================================== */
+
+/* Pale blue box, e.g. "DP", "SP", "MP1", "BP", "MP2", "EP". */
+.ygo-phase {
+  display: inline-block;
+  padding: 0.3em 0.6em;
+  background: #dce8f7;
+  border: 0.15em solid #7fa6e6;
+  border-radius: 0.3em;
+  color: #2d63c8;
+  font-size: 1.3em;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+}
+
+/* The "Turn / 3" box: ygo-turn-l is the word, ygo-turn-n the number. */
+.ygo-turn {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  background: #ece7d8;
+  border: 0.15em solid #8a8a8a;
+  border-radius: 0.35em;
+  color: #2f4fa8;
+  font-weight: bold;
+  line-height: 1.1;
+  text-align: center;
+}
+.ygo-turn-l { display: block; font-size: 1.1em; }
+.ygo-turn-n { display: block; font-size: 1.6em; color: #3a3a3a; }
+
+
+/* =====================================================================
+   11. CARD SPOTLIGHT (the info panel)
+   The green panel showing one card's full details, like the panel on the
+   left of the game screen. Works inside the board or on its own in the
+   story, so it sets its own font. Each part is on its own line:
+     ygo-spot-top    level stars + attribute badge
+     ygo-spot-stats  ATK / DEF
+     ygo-spot-name   card name (yellow)
+     ygo-spot-type   [Type / Kind] (green)
+     ygo-spot-text   effect or flavour text (italic)
+   ===================================================================== */
+.ygo-spot {
+  display: block;
+  margin: 0.6em 0 0.2em;
+  padding: 0.5em 0.75em 0.6em;
+  background: #24482f;
+  background: linear-gradient(#2d5c3a, #1c3a26);
+  border: 2px solid #5b7fd6;
+  border-radius: 0.4em;
+  box-shadow: 0 0.15em 0.3em rgba(0, 0, 0, 0.45);
+  color: #f4f4f4;
+  font-family: "Trebuchet MS", "Segoe UI", Verdana, Arial, sans-serif;
+  line-height: 1.3;
+  text-align: left;
+  min-height: 11em;                 /* keeps panels from jumping in size when a hover panel (section 14) covers this one */
+}
+.ygo-spot-top { display: block; margin-bottom: 0.25em; font-weight: bold; }
+
+/* The orange star coin before "×7". border-radius 50% turns the square into a circle. */
+.ygo-lvl {
+  display: inline-block;
+  width: 1.4em;
+  height: 1.4em;
+  margin-right: 0.15em;
+  line-height: 1.4em;
+  text-align: center;
+  border-radius: 50%;
+  background: #e8541e;
+  background: radial-gradient(circle at 35% 35%, #ffb347, #d93a12);  /* highlight off-centre = looks round and shiny */
+  color: #ffe46b;
+  font-size: 0.9em;
+}
+
+/* The rounded attribute badge ("闇 DARK"). Give it a ygo-at-... class for its colour. */
+.ygo-attr {
+  display: inline-block;
+  margin-left: 0.6em;
+  padding: 0.05em 0.5em;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 1em;
+  color: #fff;
+  font-size: 0.85em;
+  font-weight: bold;
+}
+
+/* The darker ATK/DEF bar. */
+.ygo-spot-stats {
+  display: block;
+  margin-bottom: 0.2em;
+  padding: 0.15em 0.4em;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0.25em;
+}
+.ygo-s-atk, .ygo-s-def { display: inline-block; margin-right: 1em; font-size: 1.25em; font-weight: bold; }
+.ygo-s-atk { color: #ffd84a; }      /* ATK in gold */
+.ygo-s-def { color: #9fd0ff; }      /* DEF in light blue */
+
+.ygo-spot-name { display: block; color: #ffe14d; font-size: 1.3em; font-weight: bold; text-shadow: 1px 1px 0 #000; }
+.ygo-spot-type { display: block; color: #a6e88a; }
+.ygo-spot-text { display: block; margin-top: 0.3em; font-style: italic; }
+
+
+/* =====================================================================
+   12. DUEL LOG LINE
+   A dark banner for attacks, damage and healing, used in the story
+   between boards. The red stripe on the left means damage; add
+   ygo-log-heal to make the stripe and the number green for LP gains.
+   ===================================================================== */
+.ygo-log {
+  display: block;
+  max-width: 46em;
+  margin: 1em auto;
+  padding: 0.45em 0.75em;
+  background: #1d1d26;
+  border-left: 0.35em solid #e0524a;  /* the coloured stripe on the left */
+  border-radius: 0.3em;
+  color: #f1f1f1;
+  font-family: "Trebuchet MS", "Segoe UI", Verdana, Arial, sans-serif;
+  font-weight: bold;
+  line-height: 1.4;
+  text-align: left;
+}
+.ygo-log-act { display: block; color: #ffd84a; }   /* first line: what happened, in gold */
+.ygo-delta { margin-left: 0.4em; color: #ff6b5e; } /* the "−2500", in red */
+.ygo-log-heal { border-left-color: #4cc94a; }
+.ygo-log-heal .ygo-delta { color: #7be37a; }       /* "+1000" in green when healing */
+
+
+/* =====================================================================
+   13. REAL CARD PICTURES (optional)
+   AO3 can't store images, so upload each card picture to an image host
+   (Imgur, Postimages, etc.) and paste its direct link (the one ending
+   in .png or .jpg) into src="...". Three ways to use them:
+
+   A) POP-UP: put this line inside any card, and the full card appears
+      when a reader points at it (or taps it on a phone):
+        <span class="ygo-pop"><img src="LINK" alt="Dark Magician" width="100"></span>
+   B) CARD ON THE FIELD: give the card ygo-pic and use the picture
+      instead of the name strip and picture box:
+        <div class="ygo-card ygo-pic"><img src="LINK" alt="Dark Magician" width="66"> ...stats strip... </div>
+   C) PICTURE IN THE INFO PANEL: first thing inside ygo-spot:
+        <span class="ygo-spot-img"><img src="LINK" alt="Dark Magician" width="110"></span>
+
+   The width="..." numbers only matter for readers who switch work
+   skins off: they stop the pictures from showing at full size.
+   ===================================================================== */
+
+/* Phones have no mouse, so "pointing" means tapping. A pointer cursor is
+   what tells iPhones a card can be tapped. Tapping anywhere else closes it. */
+.ygo-card { cursor: pointer; }
+
+/* A) The pop-up. Hidden until its card is pointed at.
+   Sideways, it's placed against the edge of the whole board (.ygo-duel),
+   not the card, so the field's edges can't cut it off.
+   Up and down, no "top" is given, so it stays at the height of its own
+   card; the negative margin then lifts it so it sits beside the card.
+   By default it appears at the RIGHT edge of the board... */
+.ygo-pop {
+  display: none;                    /* hidden by default */
+  position: absolute;               /* lifted out of the layout, floats over the board */
+  right: 0.8em;
+  margin-top: -12em;                /* lift it up level with its card */
+  z-index: 10;                      /* drawn above everything else */
+  width: 20em;                      /* about 200px at normal text size */
+  max-width: 45%;                   /* but never more than ~half the board on phones */
+  padding: 0.3em;
+  background: #111;
+  border: 2px solid #ffd84a;
+  border-radius: 0.4em;
+  box-shadow: 0 0.4em 1.2em rgba(0, 0, 0, 0.6);
+}
+/* ...but for cards in the right-hand columns (5th cell of the row onward:
+   "td + td + td + td + td" means "a cell with at least 4 cells before it")
+   it appears at the LEFT edge instead, so it never covers its own card. */
+.ygo-field td + td + td + td + td .ygo-pop { right: auto; left: 0.8em; }
+/* Cards in your own rows (bottom half) lift it higher, so the picture
+   doesn't hang down past the bottom of the screen. */
+.ygo-me .ygo-pop { margin-top: -20em; }
+/* The trigger: when the pointer is over a card, show the pop-up inside it. */
+.ygo-card:hover .ygo-pop { display: block; }
+/* The picture fills the pop-up's width; height follows automatically. */
+.ygo-pop img { display: block; width: 100%; height: auto; }
+
+/* B) A real card picture on the field. The card box loses its frame and
+   takes the picture's own height, and the ATK/DEF strip is pulled up
+   (negative margin) to sit over the bottom of the picture.
+   "position: relative" makes the browser draw the strip on top of the
+   picture instead of underneath it. */
+.ygo-pic { height: auto; padding: 0; background: #111; }
+.ygo-pic img { display: block; width: 100%; height: auto; }
+.ygo-pic .ygo-stats { position: relative; margin-top: -2.6em; border-radius: 0; background: rgba(0, 0, 0, 0.8); }
+
+/* C) The picture in the info panel sits on the left; the text flows on its right. */
+.ygo-spot { overflow: hidden; }     /* makes the panel tall enough to fit the picture */
+.ygo-spot-img {
+  float: left;
+  width: 7em;
+  margin: 0.1em 0.8em 0.2em 0;
+}
+.ygo-spot-img img { display: block; width: 100%; height: auto; border-radius: 0.2em; box-shadow: 0 0.15em 0.4em rgba(0, 0, 0, 0.5); }
+/* Keeps the dark ATK/DEF bar beside the picture instead of running under it. */
+.ygo-spot-stats { overflow: hidden; }
+
+
+/* =====================================================================
+   14. HOVER INFO PANELS (optional)
+   Makes the info panel at the bottom of the board switch to whichever
+   card the reader points at (or taps on a phone).
+   AO3 doesn't allow scripts, so a panel can't really change what it
+   says. Instead, each card carries its OWN hidden info panel inside it.
+   Pointing at the card shows that panel, laid exactly over the default
+   panel at the bottom of the board. Move away and it hides again,
+   uncovering the default panel.
+
+   To give a card one, put a normal info panel (same parts as section 11)
+   inside the card, as its last part, with ygo-hover added:
+     <div class="ygo-spot ygo-hover"> ...name, type, text... </div>
+   Keep the board's default panel (the one at the bottom): the hover
+   panels need it to sit on.
+   ===================================================================== */
+.ygo-hover {
+  display: none;                    /* hidden until its card is pointed at */
+  position: absolute;               /* placed against the whole board (.ygo-duel)... */
+  left: 0.5em;                      /* ...lined up with the default panel's edges: */
+  right: 0.5em;                     /*    the board's 0.5em padding on each side, */
+  bottom: 0.7em;                    /*    plus the default panel's 0.2em bottom margin */
+  margin: 0;
+  min-height: 13em;                 /* a bit taller than the default panel, so none of it peeks out above */
+  z-index: 9;                       /* above the default panel (pop-ups are 10, so they stay on top) */
+  font-size: 1.54em;                /* the field shrinks text to 0.65em; this undoes it (1 ÷ 0.65) */
+  border-color: #ffd84a;            /* gold edge, so it's clear this is the pointed-at card */
+}
+/* The trigger: pointing at a card shows the hover panel inside it. */
+.ygo-card:hover .ygo-hover { display: block; }
+
+
+/* =====================================================================
+   15. FACE-UP CARDS IN A HAND (optional)
+   For a card a duelist reveals (or to show the hero's own hand), swap
+   its small card back for a bigger face-up card:
+     <div class="ygo-mini ygo-mini-up ygo-spell">
+       <span class="ygo-mini-name">Toon World</span>
+       <span class="ygo-mini-art ygo-at-spell">魔</span>
+     </div>
+   Use a frame colour class (ygo-spell, ygo-effect...) like on the field.
+   For a real picture instead, add ygo-mini-pic and put an <img> inside
+   in place of the two spans. A ygo-pop line and a hover info panel
+   (sections 13 and 14) work inside it too.
+   ===================================================================== */
+
+/* AO3 wraps a hand's cards in a paragraph; this keeps them in one row. */
+.ygo-hand p { display: inline; }
+
+/* The face-up hand card: twice the size of a card back. */
+.ygo-mini-up {
+  width: 3em;
+  height: 4.4em;
+  margin: 0 0.15em 0.2em;
+  padding: 0.15em;
+  overflow: hidden;
+  border: 1px solid #1a1a1a;
+  color: #1a1a1a;
+  text-align: left;
+  cursor: pointer;
+}
+.ygo-mini-up:hover { outline: 2px solid #fff36b; }
+
+/* Its name strip (tiny text, two lines at most). */
+.ygo-mini-name {
+  display: block;
+  height: 2.2em;
+  overflow: hidden;
+  padding: 0.05em 0.1em;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 0.1em;
+  font-size: 0.5em;
+  line-height: 1.1;
+  font-weight: bold;
+}
+.ygo-xyz .ygo-mini-name, .ygo-link .ygo-mini-name { background: rgba(0, 0, 0, 0.35); }
+
+/* Its picture box with the attribute kanji (colour from a ygo-at class). */
+.ygo-mini-art {
+  display: block;
+  height: 2.05em;
+  margin-top: 0.1em;
+  background: #333;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 1.4em;
+  line-height: 2.05em;
+  text-align: center;
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9);
+}
+
+/* With a real picture: no frame, the picture fills the card. */
+.ygo-mini-pic { padding: 0; background: #111; }
+.ygo-mini-pic img { display: block; width: 100%; height: 100%; }
+
+/* Pop-ups and hover info panels on hand cards. */
+.ygo-mini:hover .ygo-pop, .ygo-mini:hover .ygo-hover { display: block; }
+/* The field shrinks text to 0.65em and the pop-up is sized for that, so
+   match it here; and drop the pop-up just below the hand. */
+.ygo-hand .ygo-pop { font-size: 0.65em; margin-top: 0.8em; }
+/* Hands aren't shrunk, so the info panel needs no size correction. */
+.ygo-hand .ygo-hover { font-size: 1em; }
+</script>
+
+<div class="page">
+  <header class="top">
+    <div>
+      <h1>Duel Board <span>Builder</span></h1>
+      <p>Build a Yu-Gi-Oh! duel board for your AO3 fic by clicking and typing. No code to write: copy the result into your chapter.</p>
+    </div>
+    <div class="top-actions">
+      <button type="button" class="btn-ghost" id="example-btn">Load the example duel</button>
+      <button type="button" class="btn-ghost danger" id="clear-btn">Clear the board</button>
+    </div>
+  </header>
+
+  <section class="panel" aria-labelledby="skin-h">
+    <h2 id="skin-h"><span class="step-no">1</span> Install the Work Skin (once)</h2>
+    <div class="skin-step">
+      <ol>
+        <li>On AO3, go to <b>Dashboard → Skins → My Work Skins → Create Work Skin</b>.</li>
+        <li>Give it any title, paste the Work Skin into the <b>CSS</b> box, and submit.</li>
+        <li>On your fic's <b>Edit</b> page, pick it under <b>Select Work Skin</b> and post.</li>
+      </ol>
+      <div class="actions">
+        <button type="button" class="btn" id="copy-skin">Copy the Work Skin</button>
+        <span class="status" id="skin-status" aria-live="polite"></span>
+      </div>
+    </div>
+    <details>
+      <summary>Show the Work Skin code</summary>
+      <textarea class="code" id="skin-out" readonly spellcheck="false" aria-label="Work Skin CSS"></textarea>
+    </details>
+  </section>
+
+  <div class="work">
+    <div class="col-edit">
+      <section class="panel" id="zone-panel" aria-labelledby="zone-h">
+        <h2 id="zone-h"><span class="step-no">2</span> Edit a zone</h2>
+        <div id="zone-editor"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="duel-h">
+        <h3 id="duel-h">Duelists and turn</h3>
+        <div class="row3">
+          <div class="field" style="grid-column: span 3"><label for="opp-name">Opponent (top)</label><input type="text" id="opp-name" data-p="opp.name"></div>
+          <div class="field"><label for="opp-lp">LP</label><input type="number" id="opp-lp" min="0" max="99999" step="100" data-p="opp.lp"></div>
+          <div class="field"><label for="opp-hand">Cards in hand</label><input type="number" id="opp-hand" min="0" max="15" data-p="opp.cards"></div>
+          <div></div>
+          <div class="field" style="grid-column: span 3"><label for="me-name">Hero (bottom)</label><input type="text" id="me-name" data-p="me.name"></div>
+          <div class="field"><label for="me-lp">LP</label><input type="number" id="me-lp" min="0" max="99999" step="100" data-p="me.lp"></div>
+          <div class="field"><label for="me-hand">Cards in hand</label><input type="number" id="me-hand" min="0" max="15" data-p="me.cards"></div>
+          <div></div>
+          <div class="field"><label for="turn">Turn</label><input type="number" id="turn" min="1" max="999" data-p="turn"></div>
+          <div class="field" style="grid-column: span 2"><label for="phase">Phase</label>
+            <select id="phase" data-p="phase">
+              <option value="DP">Draw Phase (DP)</option>
+              <option value="SP">Standby Phase (SP)</option>
+              <option value="MP1">Main Phase 1 (MP1)</option>
+              <option value="BP">Battle Phase (BP)</option>
+              <option value="MP2">Main Phase 2 (MP2)</option>
+              <option value="EP">End Phase (EP)</option>
+            </select>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="show-info" data-p="showInfo"><span>Show the card info panel under the board</span></label>
+        <p class="hint" id="info-note"></p>
+      </section>
+
+      <section class="panel" aria-labelledby="log-h">
+        <h3 id="log-h">Damage line (optional)</h3>
+        <p class="hint" style="margin-bottom:10px">A banner for attacks and LP changes, to put in the story between boards.</p>
+        <div class="field"><label for="log-text">What happened</label><input type="text" id="log-text" data-l="text"></div>
+        <div class="row2">
+          <div class="field"><label for="log-who">Whose LP changes</label><select id="log-who" data-l="who"></select></div>
+          <div class="field"><label for="log-delta">Change (−2500 = damage)</label><input type="number" id="log-delta" step="100" data-l="delta"></div>
+        </div>
+        <div class="log-preview" id="workskin-log"><div id="log-preview"></div></div>
+        <div class="code-bar">
+          <button type="button" class="btn" id="copy-log">Copy damage line</button>
+          <button type="button" class="btn-ghost" id="apply-log">Apply to the board's LP</button>
+          <span class="status" id="log-status" aria-live="polite"></span>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel board-panel" aria-labelledby="board-h">
+      <h2 id="board-h">Live preview</h2>
+      <p class="hint">Click any zone, or any card in a hand, to edit it. Point at cards to try the pop-ups and info panels, just like readers will.</p>
+      <div id="workskin" class="preview"><div id="preview"></div></div>
+    </section>
+
+    <section class="panel code-panel" aria-labelledby="code-h">
+      <h2 id="code-h"><span class="step-no">3</span> Copy into your chapter</h2>
+      <ol>
+        <li>In your chapter's editor on AO3, switch to <b>HTML</b> (not Rich Text).</li>
+        <li>Paste the board where you want it in the story, then preview or post.</li>
+      </ol>
+      <div class="code-bar">
+        <button type="button" class="btn" id="copy-board">Copy board code</button>
+        <span class="status" id="board-status" aria-live="polite"></span>
+      </div>
+      <textarea class="code" id="board-out" readonly spellcheck="false" aria-label="Board code for AO3"></textarea>
+      <details id="load-box">
+        <summary>Edit a board you made before</summary>
+        <p class="hint" style="margin-bottom:8px">Paste a board's code here (for example, copied back out of your chapter's HTML) to keep editing it, such as for the next turn.</p>
+        <textarea id="load-in" rows="5" spellcheck="false" aria-label="Board code to load"></textarea>
+        <div class="code-bar" style="margin-top:8px">
+          <button type="button" class="btn" id="load-btn">Load this board</button>
+          <span class="hint" id="load-status" aria-live="polite"></span>
+        </div>
+      </details>
+      <p class="hint" style="margin-top:12px">Your board is saved in this browser as you work. Card details come from YGOPRODeck's free card database.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s, el) { return (el || document).querySelector(s); };
+  var esc = function (s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); };
+  var clampInt = function (v, lo, hi) { var n = parseInt(v, 10); if (isNaN(n)) n = lo; return Math.max(lo, Math.min(hi, n)); };
+
+  /* ---------- Card vocabulary ---------- */
+  var FRAMES = [["normal", "Normal Monster"], ["effect", "Effect Monster"], ["ritual", "Ritual Monster"], ["fusion", "Fusion Monster"],
+    ["synchro", "Synchro Monster"], ["xyz", "Xyz Monster"], ["link", "Link Monster"], ["token", "Token"], ["spell", "Spell"], ["trap", "Trap"]];
+  var FRAME_IDS = FRAMES.map(function (f) { return f[0]; });
+  var ATTRS = { dark: ["闇", "DARK"], light: ["光", "LIGHT"], earth: ["地", "EARTH"], water: ["水", "WATER"], fire: ["炎", "FIRE"], wind: ["風", "WIND"], divine: ["神", "DIVINE"] };
+  var KINDS = { spell: ["Normal", "Continuous", "Quick-Play", "Field", "Equip", "Ritual"], trap: ["Normal", "Continuous", "Counter"] };
+  var SHORT = { "Normal": "Normal", "Continuous": "Cont.", "Quick-Play": "Quick", "Field": "Field", "Equip": "Equip", "Ritual": "Ritual", "Counter": "Counter" };
+
+  /* The 5 × 7 grid of the field, top row first (the opponent's side is mirrored). */
+  var LAYOUT = [
+    ["deck", "st", "st", "st", "st", "st", "extra"],
+    ["gy", "mon", "mon", "mon", "mon", "mon", "field"],
+    ["blank", "blank", "emz", "phase", "emz", "blank", "turn"],
+    ["field", "mon", "mon", "mon", "mon", "mon", "gy"],
+    ["extra", "st", "st", "st", "st", "st", "deck"]
+  ];
+  var ROW_CLASS = ["ygo-opp", "ygo-opp", "ygo-mid", "ygo-me", "ygo-me"];
+  var PILES = ["deck", "extra", "gy"];
+  var PILE_LABEL = { deck: "Deck", extra: "Extra", gy: "GY" };
+  var ROLE_NAME = { deck: "Deck", extra: "Extra Deck", gy: "Graveyard", st: "Spell & Trap Zone", mon: "Monster Zone", field: "Field Zone", emz: "Extra Monster Zone" };
+  var roleAt = function (k) { var p = k.split("-"); return LAYOUT[+p[0]][+p[1]]; };
+  var ownerOfRow = function (r) { return r < 2 ? "opp" : r > 2 ? "me" : null; };
+  var isMonster = function (c) { return c.frame !== "spell" && c.frame !== "trap"; };
+
+  function newCard(role) {
+    var st = role === "st" || role === "field";
+    return { name: "", frame: st ? "spell" : "effect", attr: "dark", level: 4, atk: "", def: "", typeLine: "", kind: role === "field" ? "Field" : "Normal",
+      text: "", pos: "atk", img: "", faceDown: false, revealed: false, usePic: false, pop: true, hover: true, glow: false, owner: "me" };
+  }
+  /* A card in a hand starts hidden (card back); "revealed" turns it face-up. */
+  function newHandCard() { return Object.assign(newCard("hand"), { usePic: true }); }
+  function handOf(n) { var a = []; for (var i = 0; i < n; i++) a.push(newHandCard()); return a; }
+
+  function emptyState() {
+    var zones = {};
+    LAYOUT.forEach(function (row, r) {
+      row.forEach(function (role, c) {
+        var k = r + "-" + c;
+        if (PILES.indexOf(role) >= 0) zones[k] = { count: role === "deck" ? 35 : 0, top: role === "gy" ? "normal" : "back" };
+        else if (["st", "mon", "field", "emz"].indexOf(role) >= 0) zones[k] = { kind: "empty" };
+      });
+    });
+    return { v: 2, opp: { name: "Opponent", lp: 8000, cards: handOf(5) }, me: { name: "Hero", lp: 8000, cards: handOf(5) }, turn: 1, phase: "DP",
+      showInfo: true, zones: zones, log: { text: "⚔ Attack!", who: "opp", delta: -1000 } };
+  }
+
+  function exampleState() {
+    var s = emptyState();
+    s.opp = { name: "Maximillion Pegasus", lp: 7000, cards: [
+      Object.assign(newHandCard(), { name: "Toon World", frame: "spell", kind: "Continuous", text: "Activate this card by paying 1000 LP.", revealed: true }),
+      newHandCard()] };
+    s.me = { name: "Yami Yugi", lp: 8000, cards: handOf(6) };
+    s.turn = 3; s.phase = "MP1";
+    s.zones["0-0"] = { count: 32, top: "back" }; s.zones["0-6"] = { count: 1, top: "back" }; s.zones["1-0"] = { count: 6, top: "trap" };
+    s.zones["3-6"] = { count: 1, top: "spell" }; s.zones["4-0"] = { count: 5, top: "back" }; s.zones["4-6"] = { count: 32, top: "back" };
+    var img = "https://cdn.cardsrealm.com/images/cartas/ct13-2016-mega-tins/en/med/dark-magician-en003.png";
+    var dm = function (extra) {
+      return Object.assign(newCard("mon"), { name: "Dark Magician", frame: "normal", attr: "dark", level: 7, atk: "2500", def: "2100",
+        typeLine: "Spellcaster / Normal", text: "The ultimate wizard in terms of attack and defense.", img: img, hover: false }, extra);
+    };
+    s.zones["2-2"] = { kind: "card", card: dm({ owner: "me" }) };
+    s.zones["3-2"] = { kind: "card", card: dm({ usePic: true, glow: true }) };
+    s.zones["3-3"] = { kind: "card", card: dm({}) };
+    s.zones["4-2"] = { kind: "card", card: Object.assign(newCard("st"), { name: "Eternal Soul", frame: "trap", kind: "Continuous",
+      text: "Every \"Dark Magician\" in your Monster Zone is unaffected by your opponent's card effects. If this face-up card leaves the field: Destroy all monsters you control. You can only use the following effect of \"Eternal Soul\" once per turn. You can activate 1 of these effects; ● Special Summon 1 \"Dark Magician\" from your hand or GY. ● Add 1 \"Dark Magic Attack\" or \"Thousand Knives\" from your Deck to your hand." }) };
+    s.zones["4-3"] = { kind: "card", card: Object.assign(newCard("st"), { faceDown: true }) };
+    s.zones["4-4"] = { kind: "card", card: Object.assign(newCard("st"), { name: "Monster Reborn", frame: "spell", kind: "Normal",
+      text: "Target 1 monster in either GY; Special Summon it." }) };
+    s.log = { text: "⚔ Dark Magician attacks directly!", who: "opp", delta: -2500 };
+    return s;
+  }
+
+  /* ---------- Building the AO3 code ---------- */
+  function lpClass(lp) { return "ygo-w" + Math.max(0, Math.min(100, Math.round(lp / 80 / 5) * 5)); }
+  function statsPair(c) {
+    if (isMonster(c)) return ["ATK " + (c.atk === "" ? "?" : c.atk), c.frame === "link" ? "LINK-" + (c.level || "?") : "DEF " + (c.def === "" ? "?" : c.def)];
+    return [c.frame.toUpperCase(), SHORT[c.kind] || c.kind];
+  }
+  function artClass(c) { return c.frame === "spell" ? "ygo-at-spell" : c.frame === "trap" ? "ygo-at-trap" : "ygo-at-" + c.attr; }
+  function kanji(c) { return c.frame === "spell" ? "魔" : c.frame === "trap" ? "罠" : (ATTRS[c.attr] || ["?"])[0]; }
+  function typeText(c) {
+    if (!isMonster(c)) return c.kind + " " + (c.frame === "spell" ? "Spell" : "Trap");
+    if (c.typeLine) return c.typeLine;
+    for (var i = 0; i < FRAMES.length; i++) if (FRAMES[i][0] === c.frame) return FRAMES[i][1];
+    return "Monster";
+  }
+
+  function plateHTML(p, side) {
+    return ['<div class="ygo-bar' + (side === "opp" ? " ygo-bar-opp" : "") + '"><div class="ygo-plate ygo-plate-' + side + '">',
+      '<span class="ygo-pname">' + esc(p.name) + "</span>",
+      '<span class="ygo-lp"><span class="ygo-lp-tag">LP</span> <span class="ygo-lp-num">' + p.lp + "</span></span>",
+      '<span class="ygo-lp-track"><span class="ygo-lp-fill ' + lpClass(p.lp) + '">&nbsp;</span></span>',
+      "</div></div>"].join("\n");
+  }
+  /* One card in a hand: a small back, or a face-up card when revealed.
+     extra = preview-only attributes (click target, selection), never in the AO3 code. */
+  function miniHTML(c, extra, selCls) {
+    if (!c.revealed) return '<span class="ygo-mini ygo-back' + selCls + '"' + extra + ">&nbsp;</span>";
+    var pic = c.usePic && c.img, cls = ["ygo-mini", "ygo-mini-up", "ygo-" + c.frame];
+    if (pic) cls.push("ygo-mini-pic");
+    if (c.glow) cls.push("ygo-focus");
+    var L = ['<div class="' + cls.join(" ") + selCls + '"' + extra + ">"];
+    if (pic) L.push('<img src="' + esc(c.img) + '" alt="' + esc(c.name || "Card") + '" width="48">');
+    else L.push('<span class="ygo-mini-name">' + esc(c.name || "?") + "</span>", '<span class="ygo-mini-art ' + artClass(c) + '">' + kanji(c) + "</span>");
+    if (c.pop && c.img) L.push('<span class="ygo-pop"><img src="' + esc(c.img) + '" alt="' + esc(c.name || "Card") + ' card" width="100"></span>');
+    if (c.hover && !c.glow) L.push(spotHTML(c, true));
+    L.push("</div>");
+    return L.join("\n");
+  }
+  function handHTML(p, side, preview, sel) {
+    var L = ['<div class="ygo-hand">'];
+    p.cards.forEach(function (c, i) {
+      var k = "h-" + side + "-" + i;
+      L.push(miniHTML(c, preview ? ' data-h="' + k + '" tabindex="0"' : "", preview && sel === k ? " is-sel" : ""));
+    });
+    L.push('<span class="ygo-hand-label">Hand: ' + p.cards.length + "</span>", "</div>");
+    return L.join("\n");
+  }
+  function spotHTML(c, hover) {
+    var L = ['<div class="ygo-spot' + (hover ? " ygo-hover" : "") + '">'];
+    if (c.img) L.push('<span class="ygo-spot-img"><img src="' + esc(c.img) + '" alt="' + esc(c.name || "Card") + ' card" width="110"></span>');
+    var top;
+    if (isMonster(c)) {
+      var n = c.level || "?";
+      top = c.frame === "link" ? "LINK-" + n + " " : c.frame === "xyz" ? '<span class="ygo-lvl">★</span> Rank ' + n + " " : '<span class="ygo-lvl">★</span> ×' + n + " ";
+      if (ATTRS[c.attr]) top += '<span class="ygo-attr ygo-at-' + c.attr + '">' + ATTRS[c.attr][0] + " " + ATTRS[c.attr][1] + "</span>";
+    } else {
+      top = '<span class="ygo-attr ' + artClass(c) + '">' + kanji(c) + " " + c.frame.toUpperCase() + "</span>";
+    }
+    L.push('<span class="ygo-spot-top">' + top + "</span>");
+    if (isMonster(c)) {
+      var sp = statsPair(c);
+      L.push('<span class="ygo-spot-stats"><span class="ygo-s-atk">' + esc(sp[0]) + '</span> <span class="ygo-s-def">' + esc(sp[1]) + "</span></span>");
+    }
+    L.push('<span class="ygo-spot-name">' + esc(c.name || "Unnamed card") + "</span>");
+    L.push('<span class="ygo-spot-type">[' + esc(typeText(c)) + "]</span>");
+    if (c.text) L.push('<span class="ygo-spot-text">' + esc(c.text.replace(/\s*\n\s*/g, " ")) + "</span>");
+    L.push("</div>");
+    return L.join("\n");
+  }
+  function cardHTML(c, role) {
+    var monZone = role === "mon" || role === "emz";
+    if (c.faceDown) return '<div class="ygo-card ygo-back' + (monZone && isMonster(c) ? " ygo-def" : "") + '">&nbsp;</div>';
+    var def = monZone && isMonster(c) && c.frame !== "link" && c.pos === "def";
+    var pic = c.usePic && c.img && !def;
+    var cls = ["ygo-card", "ygo-" + c.frame];
+    if (pic) cls.push("ygo-pic");
+    if (def) cls.push("ygo-def");
+    if (role === "emz") cls.push(c.owner === "opp" ? "ygo-theirs" : "ygo-mine");
+    if (c.glow) cls.push("ygo-focus");
+    var sp = statsPair(c);
+    var L = ['<div class="' + cls.join(" ") + '">'];
+    if (pic) L.push('<img src="' + esc(c.img) + '" alt="' + esc(c.name || "Card") + '" width="66">');
+    else L.push('<span class="ygo-cname">' + esc(c.name || "?") + "</span>", '<span class="ygo-art ' + artClass(c) + '">' + kanji(c) + "</span>");
+    L.push('<span class="ygo-stats"><span class="ygo-a">' + esc(sp[0]) + '</span> <span class="ygo-d">' + esc(sp[1]) + "</span></span>");
+    if (c.pop && c.img) L.push('<span class="ygo-pop"><img src="' + esc(c.img) + '" alt="' + esc(c.name || "Card") + ' card" width="100"></span>');
+    if (c.hover && !c.glow) L.push(spotHTML(c, true));
+    L.push("</div>");
+    return L.join("\n");
+  }
+  function cellHTML(s, r, c, preview, sel) {
+    var role = LAYOUT[r][c], k = r + "-" + c, inner, z = s.zones[k];
+    if (role === "blank") inner = "&nbsp;";
+    else if (role === "phase") inner = '<span class="ygo-phase">' + esc(s.phase) + "</span>";
+    else if (role === "turn") inner = '<span class="ygo-turn"><span class="ygo-turn-l">Turn</span> <span class="ygo-turn-n">' + s.turn + "</span></span>";
+    else if (PILES.indexOf(role) >= 0) {
+      inner = z.count > 0
+        ? '<div class="ygo-card ' + (z.top === "back" ? "ygo-back" : "ygo-" + z.top) + ' ygo-pile"><span class="ygo-count">' + z.count + '</span> <span class="ygo-plabel">' + PILE_LABEL[role] + "</span></div>"
+        : '<div class="ygo-zone">' + PILE_LABEL[role] + "</div>";
+    } else {
+      inner = z.kind === "card" ? cardHTML(z.card, role) : '<div class="ygo-zone">' + (role === "field" ? "Field" : "&nbsp;") + "</div>";
+    }
+    var attrs = "";
+    if (preview && role !== "blank") attrs = ' data-z="' + k + '" tabindex="0"' + (sel === k ? ' class="is-sel"' : "");
+    return "<td" + attrs + ">" + inner + "</td>";
+  }
+  /* Every card readers can see: face-up cards on the field and revealed cards in hands. */
+  function eachCard(s, fn) {
+    Object.keys(s.zones).forEach(function (k) { var z = s.zones[k]; if (z.kind === "card" && z.card && !z.card.faceDown) fn(z.card, k); });
+    ["opp", "me"].forEach(function (side) { s[side].cards.forEach(function (c) { if (c.revealed) fn(c); }); });
+  }
+  /* Every card, hidden ones too (used to make sure only one card glows). */
+  function allCards(s, fn) {
+    Object.keys(s.zones).forEach(function (k) { var z = s.zones[k]; if (z.card) fn(z.card); });
+    ["opp", "me"].forEach(function (side) { s[side].cards.forEach(fn); });
+  }
+  function glowCard(s) { var g = null; eachCard(s, function (c) { if (c.glow && !g) g = c; }); return g; }
+  function anyHover(s) { var h = false; eachCard(s, function (c) { if (c.hover && !c.glow) h = true; }); return h; }
+
+  function boardHTML(s, preview, sel) {
+    var L = ['<div class="ygo-duel">', plateHTML(s.opp, "opp"), handHTML(s.opp, "opp", preview, sel), '<div class="ygo-scroll"><table class="ygo-field">'];
+    for (var r = 0; r < 5; r++) {
+      L.push('<tr class="' + ROW_CLASS[r] + '">');
+      for (var c = 0; c < 7; c++) L.push(cellHTML(s, r, c, preview, sel));
+      L.push("</tr>");
+    }
+    L.push("</table></div>", handHTML(s.me, "me", preview, sel), plateHTML(s.me, "me"));
+    if (s.showInfo) {
+      var g = glowCard(s);
+      if (g) L.push(spotHTML(g, false));
+      else if (anyHover(s)) L.push('<div class="ygo-spot">\n<span class="ygo-spot-name">Card details</span>\n<span class="ygo-spot-text">Point at a card to see its details.</span>\n</div>');
+    }
+    L.push("</div>");
+    return L.join("\n");
+  }
+  function logResult(s) {
+    var p = s[s.log.who] || s.opp, d = Number(s.log.delta) || 0;
+    return { p: p, before: p.lp, after: Math.max(0, p.lp + d), d: d };
+  }
+  function logHTML(s) {
+    var x = logResult(s);
+    return ['<div class="ygo-log' + (x.d > 0 ? " ygo-log-heal" : "") + '">',
+      '<span class="ygo-log-act">' + esc(s.log.text) + "</span>",
+      esc(x.p.name) + " LP " + x.before + " → " + x.after + ' <span class="ygo-delta">' + (x.d < 0 ? "−" : "+") + Math.abs(x.d) + "</span>",
+      "</div>"].join("\n");
+  }
+
+  /* ---------- Reading a board back in ---------- */
+  var txt = function (el) { return el ? el.textContent.replace(/\s+/g, " ").trim() : ""; };
+  function frameOf(el) { for (var i = 0; i < FRAME_IDS.length; i++) if (el.classList.contains("ygo-" + FRAME_IDS[i])) return FRAME_IDS[i]; return null; }
+  function attrOf(el) { if (!el) return null; for (var a in ATTRS) if (el.classList.contains("ygo-at-" + a)) return a; return null; }
+  function fillFromSpot(c, sp) {
+    if (!c.name) c.name = txt(sp.querySelector(".ygo-spot-name"));
+    var t = txt(sp.querySelector(".ygo-spot-type")).replace(/^\[|\]$/g, "");
+    if (isMonster(c)) { if (t) c.typeLine = t; } else { var kind = t.replace(/\s*(Spell|Trap)$/, ""); if (KINDS[c.frame].indexOf(kind) >= 0) c.kind = kind; }
+    c.text = txt(sp.querySelector(".ygo-spot-text"));
+    var top = txt(sp.querySelector(".ygo-spot-top")), m = top.match(/×\s*(\d+)|Rank\s*(\d+)|LINK-(\d+)/);
+    if (m) c.level = +(m[1] || m[2] || m[3]);
+    var a = attrOf(sp.querySelector(".ygo-attr")); if (a) c.attr = a;
+    var im = sp.querySelector(".ygo-spot-img img"); if (im && !c.img) c.img = im.getAttribute("src") || "";
+    /* Hand cards don't show ATK/DEF on the card itself, so read them from the panel. */
+    var sa = txt(sp.querySelector(".ygo-s-atk")), sd = txt(sp.querySelector(".ygo-s-def"));
+    if (sa) c.atk = sa.replace(/^ATK\s*/, "").replace(/^\?$/, "");
+    if (sd && !/^LINK-/.test(sd)) c.def = sd.replace(/^DEF\s*/, "").replace(/^\?$/, "");
+  }
+  function parseCard(el, role) {
+    var c = newCard(role);
+    if (el.classList.contains("ygo-back")) { c.faceDown = true; c.frame = role === "mon" || role === "emz" ? "effect" : "spell"; return c; }
+    c.frame = frameOf(el) || "effect";
+    c.pos = el.classList.contains("ygo-def") ? "def" : "atk";
+    c.owner = el.classList.contains("ygo-theirs") ? "opp" : "me";
+    c.glow = el.classList.contains("ygo-focus");
+    c.usePic = el.classList.contains("ygo-pic");
+    var picImg = null;
+    Array.prototype.forEach.call(el.querySelectorAll("img"), function (im) { if (!picImg && !im.closest(".ygo-pop") && !im.closest(".ygo-spot")) picImg = im; });
+    c.name = txt(el.querySelector(".ygo-cname")) || (picImg ? picImg.getAttribute("alt") || "" : "");
+    var a = attrOf(el.querySelector(".ygo-art")); if (a) c.attr = a;
+    var A = txt(el.querySelector(".ygo-stats .ygo-a")), D = txt(el.querySelector(".ygo-stats .ygo-d"));
+    if (isMonster(c)) {
+      c.atk = A.replace(/^ATK\s*/, "").replace(/^\?$/, "");
+      var lk = D.match(/LINK-(\d+)/);
+      if (lk) c.level = +lk[1]; else c.def = D.replace(/^DEF\s*/, "").replace(/^\?$/, "");
+    } else {
+      for (var full in SHORT) if (SHORT[full] === D && KINDS[c.frame].indexOf(full) >= 0) c.kind = full;
+    }
+    var pop = el.querySelector(".ygo-pop img");
+    c.pop = !!pop;
+    c.img = picImg && c.usePic ? picImg.getAttribute("src") || "" : pop ? pop.getAttribute("src") || "" : "";
+    var hv = el.querySelector(".ygo-hover");
+    c.hover = !!hv;
+    if (hv) fillFromSpot(c, hv);
+    return c;
+  }
+  function parseMini(el) {
+    var c = newHandCard();
+    if (el.classList.contains("ygo-back")) return c;
+    c.revealed = true;
+    c.frame = frameOf(el) || "effect";
+    c.glow = el.classList.contains("ygo-focus");
+    c.usePic = el.classList.contains("ygo-mini-pic");
+    var picImg = null;
+    Array.prototype.forEach.call(el.querySelectorAll("img"), function (im) { if (!picImg && !im.closest(".ygo-pop") && !im.closest(".ygo-spot")) picImg = im; });
+    c.name = txt(el.querySelector(".ygo-mini-name")) || (picImg ? picImg.getAttribute("alt") || "" : "");
+    var a = attrOf(el.querySelector(".ygo-mini-art")); if (a) c.attr = a;
+    var pop = el.querySelector(".ygo-pop img");
+    c.pop = !!pop;
+    c.img = picImg ? picImg.getAttribute("src") || "" : pop ? pop.getAttribute("src") || "" : "";
+    var hv = el.querySelector(".ygo-hover");
+    c.hover = !!hv;
+    if (hv) fillFromSpot(c, hv);
+    return c;
+  }
+  function parseBoard(html) {
+    var doc = new DOMParser().parseFromString(html, "text/html");
+    var duel = doc.querySelector(".ygo-duel");
+    var rows = duel ? duel.querySelectorAll(".ygo-field tr") : [];
+    if (!duel || rows.length < 5) throw new Error("not a board");
+    var s = emptyState();
+    [["opp", ".ygo-plate-opp"], ["me", ".ygo-plate-me"]].forEach(function (p) {
+      var el = duel.querySelector(p[1]); if (!el) return;
+      s[p[0]].name = txt(el.querySelector(".ygo-pname")) || s[p[0]].name;
+      s[p[0]].lp = clampInt(txt(el.querySelector(".ygo-lp-num")), 0, 99999);
+    });
+    var hands = duel.querySelectorAll(".ygo-hand");
+    [["opp", hands[0]], ["me", hands[1]]].forEach(function (h) {
+      if (h[1]) s[h[0]].cards = Array.prototype.map.call(h[1].querySelectorAll(".ygo-mini"), parseMini);
+    });
+    for (var r = 0; r < 5; r++) {
+      var cells = rows[r].querySelectorAll(":scope > td");
+      for (var c = 0; c < 7 && c < cells.length; c++) {
+        var td = cells[c], role = LAYOUT[r][c], k = r + "-" + c;
+        if (role === "blank") continue;
+        if (role === "phase") { s.phase = txt(td) || "MP1"; continue; }
+        if (role === "turn") { s.turn = clampInt(txt(td.querySelector(".ygo-turn-n")), 1, 999); continue; }
+        if (PILES.indexOf(role) >= 0) {
+          var p = td.querySelector(".ygo-pile");
+          s.zones[k] = p ? { count: clampInt(txt(p.querySelector(".ygo-count")), 0, 99), top: p.classList.contains("ygo-back") ? "back" : frameOf(p) || "normal" }
+            : { count: 0, top: role === "gy" ? "normal" : "back" };
+          continue;
+        }
+        var card = td.querySelector(".ygo-card");
+        s.zones[k] = card ? { kind: "card", card: parseCard(card, role) } : { kind: "empty" };
+      }
+    }
+    var spot = null;
+    Array.prototype.forEach.call(duel.querySelectorAll(".ygo-spot"), function (el) { if (!spot && !el.classList.contains("ygo-hover")) spot = el; });
+    s.showInfo = !!spot;
+    var g = glowCard(s);
+    if (g && spot) fillFromSpot(g, spot);
+    return s;
+  }
+
+  /* ---------- State, saving ---------- */
+  var KEY = "ygo-duel-builder-v1";
+  var state, sel = null, lookupMsg = "", lastResults = [];
+  try { state = JSON.parse(localStorage.getItem(KEY)); } catch (e) { state = null; }
+  /* Boards saved by the first version only stored how many cards each hand had. */
+  if (state && state.v === 1 && state.zones) {
+    ["opp", "me"].forEach(function (side) { state[side].cards = handOf(state[side].hand || 0); delete state[side].hand; });
+    state.v = 2;
+  }
+  if (!state || state.v !== 2 || !state.zones) state = exampleState();
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: keep working without it */ } }
+
+  /* ---------- Rendering ---------- */
+  var preview = $("#preview"), boardOut = $("#board-out"), editor = $("#zone-editor");
+  function render() {
+    preview.innerHTML = boardHTML(state, true, sel);
+    boardOut.value = boardHTML(state, false);
+    $("#log-preview").innerHTML = logHTML(state);
+    var g = glowCard(state), note = $("#info-note");
+    if (!state.showInfo) note.textContent = anyHover(state) ? "Turned off. Cards set to swap the info panel will cover the hero's name plate instead, so keep it on." : "";
+    else if (g) note.textContent = "Showing " + (g.name || "the highlighted card") + ", the highlighted card.";
+    else if (anyHover(state)) note.textContent = "No card is highlighted, so the panel says “Point at a card to see its details.”";
+    else note.textContent = "Highlight a card (in its zone settings) to show its details here.";
+    save();
+  }
+
+  function fillSideInputs() {
+    $("#opp-name").value = state.opp.name; $("#opp-lp").value = state.opp.lp; $("#opp-hand").value = state.opp.cards.length;
+    $("#me-name").value = state.me.name; $("#me-lp").value = state.me.lp; $("#me-hand").value = state.me.cards.length;
+    $("#turn").value = state.turn; $("#phase").value = state.phase; $("#show-info").checked = state.showInfo;
+    $("#log-text").value = state.log.text; $("#log-delta").value = state.log.delta;
+    fillLogWho();
+  }
+  function fillLogWho() {
+    $("#log-who").innerHTML = '<option value="opp">' + esc(state.opp.name) + '</option><option value="me">' + esc(state.me.name) + "</option>";
+    $("#log-who").value = state.log.who;
+  }
+
+  /* ---------- Zone editor ---------- */
+  function opt(list, val) { return list.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(val) ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join(""); }
+  function check(id, f, on, label, disabled) {
+    return '<label class="check"><input type="checkbox" id="' + id + '" data-f="' + f + '" data-struct' + (on ? " checked" : "") + (disabled ? " disabled" : "") + "><span>" + label + "</span></label>";
+  }
+  function seg(name, f, items, val) {
+    return '<div class="seg" role="radiogroup">' + items.map(function (it) {
+      return '<label><input type="radio" name="' + name + '" id="' + name + "-" + it[0] + '" value="' + it[0] + '" data-f="' + f + '" data-struct' + (it[0] === val ? " checked" : "") + "><span>" + it[1] + "</span></label>";
+    }).join("") + "</div>";
+  }
+  function isHandKey(k) { return /^h-/.test(k); }
+  /* What's selected: a field zone ("3-2") or a card in a hand ("h-opp-0"). */
+  function target() {
+    if (!sel) return null;
+    if (isHandKey(sel)) {
+      var p = sel.split("-"), side = p[1], i = +p[2], hc = state[side].cards[i];
+      return hc ? { hand: true, side: side, i: i, card: hc, role: "hand" } : null;
+    }
+    var z = state.zones[sel];
+    return { hand: false, z: z, role: roleAt(sel), card: z && z.kind === "card" ? z.card : null };
+  }
+  function cur() { var t = target(); return t ? t.card : null; }
+  function zoneTitle(k) {
+    if (isHandKey(k)) { var t = target(); return state[t.side].name + "’s hand, card " + (t.i + 1) + " of " + state[t.side].cards.length; }
+    var p = k.split("-"), r = +p[0], c = +p[1], role = LAYOUT[r][c];
+    if (role === "emz") return "Extra Monster Zone (" + (c === 2 ? "left" : "right") + ")";
+    var who = state[ownerOfRow(r)].name;
+    return who + "’s " + ROLE_NAME[role] + (role === "st" || role === "mon" ? " " + c : "");
+  }
+
+  function editorHTML() {
+    var t = target();
+    if (!t) return '<p class="empty-note">Click any zone on the board, or any card in a hand, to put a card there or change it.</p>';
+    var role = t.role, z = t.z, h = '<p class="zone-title">' + esc(zoneTitle(sel)) + "</p>";
+    if (!t.hand && PILES.indexOf(role) >= 0) {
+      h += '<div class="field"><label for="f-count">Cards in this pile</label><input type="number" id="f-count" min="0" max="99" data-f="count" value="' + z.count + '"></div>';
+      if (role === "gy") h += '<div class="field"><label for="f-top">Card on top</label><select id="f-top" data-f="top" data-struct>' +
+        opt(FRAMES.filter(function (f) { return f[0] !== "token"; }), z.top) + "</select></div>";
+      return h + '<p class="hint">At 0 the zone shows as empty.</p>';
+    }
+    if (!t.hand) {
+      h += '<div class="field"><span class="legend">What’s here</span>' + seg("f-kind", "kind", [["empty", "Nothing"], ["card", "A card"]], z.kind) + "</div>";
+      if (z.kind !== "card") return h;
+    }
+    var c = t.card, mon = isMonster(c), monZone = role === "mon" || role === "emz";
+    h += '<div class="field"><label for="f-name">Card name</label><div class="inline"><input type="text" id="f-name" data-f="name" autocomplete="off" value="' + esc(c.name) + '">' +
+      '<button type="button" class="btn" id="lookup-btn">Look up</button></div>' +
+      '<div class="lookup-out" id="lookup-out" aria-live="polite">' + lookupMsg + "</div>" +
+      '<p class="hint">Look up fills in everything except the picture. You can change any detail after.</p></div>';
+    h += '<div class="checks">' + (t.hand
+      ? check("f-revealed", "revealed", c.revealed, "Face-up (revealed): readers can see this card") +
+        (c.revealed ? "" : '<p class="hint">Readers only see a card back. Anything you fill in below stays hidden until you reveal it.</p>')
+      : check("f-facedown", "faceDown", c.faceDown, "Face-down (set): readers only see the card back")) + "</div>";
+    h += '<div class="field"><label for="f-frame">Card type</label><select id="f-frame" data-f="frame" data-struct>' + opt(FRAMES, c.frame) + "</select></div>";
+    if (mon) {
+      var lvLabel = c.frame === "xyz" ? "Rank" : c.frame === "link" ? "Link rating" : "Level";
+      h += '<div class="row3"><div class="field"><label for="f-attr">Attribute</label><select id="f-attr" data-f="attr">' +
+        opt(Object.keys(ATTRS).map(function (a) { return [a, ATTRS[a][0] + " " + ATTRS[a][1]]; }), c.attr) + "</select></div>" +
+        '<div class="field"><label for="f-level">' + lvLabel + '</label><input type="number" id="f-level" min="0" max="13" data-f="level" value="' + esc(c.level) + '"></div><div></div></div>';
+      h += '<div class="row2"><div class="field"><label for="f-atk">ATK</label><input type="text" id="f-atk" inputmode="numeric" data-f="atk" value="' + esc(c.atk) + '"></div>' +
+        (c.frame === "link" ? "<div></div>" : '<div class="field"><label for="f-def">DEF</label><input type="text" id="f-def" inputmode="numeric" data-f="def" value="' + esc(c.def) + '"></div>') + "</div>";
+      if (monZone && c.frame !== "link") h += '<div class="field"><span class="legend">Position</span>' + seg("f-pos", "pos", [["atk", "Attack"], ["def", "Defense"]], c.pos) + "</div>";
+      h += '<div class="field"><label for="f-type">Type line</label><input type="text" id="f-type" data-f="typeLine" placeholder="Spellcaster / Normal" value="' + esc(c.typeLine) + '"></div>';
+    } else {
+      h += '<div class="field"><label for="f-kindsel">' + (c.frame === "spell" ? "Spell" : "Trap") + ' kind</label><select id="f-kindsel" data-f="kind">' +
+        opt(KINDS[c.frame].map(function (k) { return [k, k]; }), c.kind) + "</select></div>";
+    }
+    h += '<div class="field"><label for="f-text">Card text</label><textarea id="f-text" rows="4" data-f="text">' + esc(c.text) + "</textarea></div>";
+    h += '<div class="field"><label for="f-img">Picture link</label><div class="pic-row"><div style="display:grid;gap:4px;min-width:0">' +
+      '<input type="url" id="f-img" data-f="img" placeholder="https://i.imgur.com/abc123.png" value="' + esc(c.img) + '">' +
+      '<p class="hint" id="img-status"></p></div><img id="img-thumb" alt="" hidden></div>' +
+      '<p class="hint">Upload the card picture to an image host and paste its direct link (it usually ends in .png or .jpg).</p></div>';
+    var noImg = !c.img;
+    h += '<div class="checks">' +
+      check("f-usepic", "usePic", c.usePic, (t.hand ? "Show the picture in the hand" : "Show the picture on the field") + " instead of the drawn card" + (c.pos === "def" && mon && monZone ? " (only in Attack Position)" : ""), noImg) +
+      check("f-pop", "pop", c.pop, "Pop up the picture when a reader points at the card", noImg) +
+      check("f-hover", "hover", c.hover, "Swap the info panel to this card when pointed at") +
+      check("f-glow", "glow", c.glow, "Highlight this card (golden glow; the info panel shows it)") + "</div>";
+    if (role === "emz") h += '<div class="field"><label for="f-owner">Belongs to</label><select id="f-owner" data-f="owner">' +
+      opt([["me", state.me.name], ["opp", state.opp.name]], c.owner) + "</select></div>";
+    if (t.hand) {
+      var last = state[t.side].cards.length - 1;
+      h += '<div class="code-bar">' +
+        '<button type="button" class="btn-ghost" id="hand-left"' + (t.i === 0 ? " disabled" : "") + ">← Move left</button>" +
+        '<button type="button" class="btn-ghost" id="hand-right"' + (t.i === last ? " disabled" : "") + ">Move right →</button>" +
+        '<button type="button" class="btn-ghost danger" id="hand-remove">Remove from hand</button></div>';
+    } else {
+      h += '<button type="button" class="btn-ghost danger" id="clear-zone">Empty this zone</button>';
+    }
+    return h;
+  }
+
+  function renderEditor() {
+    var focusId = document.activeElement && editor.contains(document.activeElement) ? document.activeElement.id : null;
+    editor.innerHTML = editorHTML();
+    if (focusId && document.getElementById(focusId)) document.getElementById(focusId).focus();
+    checkPicture();
+  }
+
+  function setField(el) {
+    var f = el.dataset.f, t = target();
+    if (!t) return;
+    var z = t.z;
+    if (f === "kind") {
+      if (el.value === "card") state.zones[sel] = { kind: "card", card: z.card || newCard(t.role) };
+      else state.zones[sel] = { kind: "empty", card: z.card };
+      return;
+    }
+    if (f === "count") { z.count = clampInt(el.value, 0, 99); return; }
+    if (f === "top") { z.top = el.value; return; }
+    var c = t.card, v = el.type === "checkbox" ? el.checked : el.value;
+    if (f === "level") v = clampInt(v, 0, 13);
+    if (f === "glow" && v) allCards(state, function (o) { o.glow = false; });
+    c[f] = v;
+    if (f === "frame" && !isMonster(c) && KINDS[c.frame].indexOf(c.kind) < 0) c.kind = "Normal";
+    if (f === "img") {
+      var on = !!String(v).trim();
+      ["#f-usepic", "#f-pop"].forEach(function (id) { var box = $(id); if (box) box.disabled = !on; });
+    }
+  }
+
+  editor.addEventListener("input", function (e) {
+    var el = e.target; if (!el.dataset.f || el.type === "radio" || el.type === "checkbox" || el.tagName === "SELECT") return;
+    setField(el); render();
+    if (el.dataset.f === "img") { clearTimeout(checkPicture.t); checkPicture.t = setTimeout(checkPicture, 450); }
+  });
+  editor.addEventListener("change", function (e) {
+    var el = e.target; if (!el.dataset.f) return;
+    if (el.type === "radio" || el.type === "checkbox" || el.tagName === "SELECT") {
+      setField(el); render();
+      if (el.hasAttribute("data-struct")) renderEditor();
+    }
+  });
+  editor.addEventListener("click", function (e) {
+    if (e.target.id === "lookup-btn") { doLookup(); return; }
+    if (e.target.id === "clear-zone") { state.zones[sel] = { kind: "empty" }; lookupMsg = ""; render(); renderEditor(); return; }
+    if (e.target.id === "hand-left" || e.target.id === "hand-right") {
+      var t = target(), cards = state[t.side].cards, j = t.i + (e.target.id === "hand-left" ? -1 : 1);
+      if (j < 0 || j >= cards.length) return;
+      var moved = cards[t.i]; cards[t.i] = cards[j]; cards[j] = moved;
+      sel = "h-" + t.side + "-" + j; render(); renderEditor();
+      if ($("#" + e.target.id) && !$("#" + e.target.id).disabled) $("#" + e.target.id).focus();
+      return;
+    }
+    if (e.target.id === "hand-remove") {
+      var tr = target(); state[tr.side].cards.splice(tr.i, 1);
+      sel = null; lookupMsg = ""; fillSideInputs(); render(); renderEditor();
+      return;
+    }
+    var res = e.target.closest(".result");
+    if (res) applyResult(lastResults[+res.dataset.i]);
+  });
+  editor.addEventListener("keydown", function (e) { if (e.key === "Enter" && e.target.id === "f-name") { e.preventDefault(); doLookup(); } });
+
+  /* ---------- Picture link checks ---------- */
+  function linkHint(url) {
+    if (/example\.com/i.test(url)) return "This is a placeholder link. Replace it with your own picture link.";
+    if (/^https?:\/\/(www\.|m\.)?imgur\.com\//i.test(url)) return "This is an Imgur page, not the picture. On Imgur, right-click the picture, choose “Copy image address”, and paste that (it starts with i.imgur.com).";
+    if (/drive\.google\.com|dropbox\.com|onedrive|1drv\.ms/i.test(url)) return "Cloud drive links don’t show on AO3. Upload the picture to an image host instead.";
+    if (/discord(app)?\.(com|net)/i.test(url)) return "Discord links stop working after a while. Upload the picture to an image host instead.";
+    if (/ygoprodeck\.com/i.test(url)) return "YGOPRODeck asks people not to link its pictures directly. Save the picture and upload it to your own image host.";
+    if (/^http:\/\//i.test(url)) return "Use a link that starts with https://, or some readers’ browsers will block it.";
+    if (url && !/^https:\/\//i.test(url)) return "A picture link should start with https://";
+    return "";
+  }
+  function checkPicture() {
+    var c = cur(), st = $("#img-status"), th = $("#img-thumb");
+    if (!c || !st) return;
+    var url = String(c.img || "").trim(), hint = linkHint(url);
+    th.hidden = true;
+    if (!url) { st.className = "hint"; st.textContent = ""; return; }
+    st.className = "hint"; st.textContent = "Checking the link…";
+    var probe = new Image();
+    probe.onload = function () {
+      if (cur() !== c || String(c.img).trim() !== url) return;
+      st.className = hint ? "hint bad" : "hint ok";
+      st.textContent = "✓ Picture found (" + probe.naturalWidth + " × " + probe.naturalHeight + ")." + (hint ? " " + hint : "");
+      th.src = url; th.hidden = false;
+    };
+    probe.onerror = function () {
+      setTimeout(function () {
+        if (cur() !== c || String(c.img).trim() !== url) return;
+        st.className = "hint bad";
+        st.textContent = blocked.img
+          ? "Can’t check pictures here. " + BLOCKED_TIP + (hint ? " " + hint : "")
+          : "✗ This link doesn’t open a picture. " + (hint || "Use a direct link: open the picture on its own, then copy that address. It usually ends in .png or .jpg.");
+      }, 150);
+    };
+    probe.src = url;
+  }
+
+  /* ---------- Blocked windows ----------
+     Some places that display HTML files (an app's file preview, a sandboxed page) forbid
+     connections to other websites. The browser reports each refusal, so we can tell that
+     apart from being offline and say what to do. */
+  var blocked = { connect: false, img: false };
+  document.addEventListener("securitypolicyviolation", function (e) {
+    var d = e.effectiveDirective || e.violatedDirective || "";
+    if (/connect|default/.test(d)) blocked.connect = true;
+    if (/img|default/.test(d)) blocked.img = true;
+  });
+  var BLOCKED_TIP = "This window blocks other websites. Open duel-board-builder.html in a web browser such as Firefox or Chrome (double-click the file, or drag it into a browser window).";
+
+  /* ---------- Card lookup (YGOPRODeck) ---------- */
+  function doLookup() {
+    var q = ($("#f-name").value || "").trim(), out = $("#lookup-out");
+    if (q.length < 2) { lookupMsg = '<p class="hint bad">Type at least 2 letters of the card’s name first.</p>'; out.innerHTML = lookupMsg; return; }
+    out.innerHTML = '<p class="hint">Searching…</p>';
+    fetch("https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=" + encodeURIComponent(q) + "&num=10&offset=0")
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        var data = res.ok && res.j && res.j.data || [];
+        if (!data.length) { lookupMsg = '<p class="hint bad">No card found matching “' + esc(q) + '”. Check the spelling, or fill in the details yourself.</p>'; }
+        else {
+          data.sort(function (a, b) { return (b.name.toLowerCase() === q.toLowerCase()) - (a.name.toLowerCase() === q.toLowerCase()); });
+          lastResults = data;
+          lookupMsg = '<p class="hint">Pick the card:</p><div class="results">' + data.map(function (d, i) {
+            return '<button type="button" class="result" data-i="' + i + '"><b>' + esc(d.name) + "</b><span>" + esc(d.type) + "</span></button>";
+          }).join("") + "</div>";
+        }
+        if ($("#lookup-out")) $("#lookup-out").innerHTML = lookupMsg;
+      })
+      .catch(function () {
+        /* the refusal report can arrive just after the failed request, so look a moment later */
+        setTimeout(function () {
+          lookupMsg = '<p class="hint bad">' + (blocked.connect
+            ? "Look up can’t reach the card database from here. " + BLOCKED_TIP
+            : navigator.onLine === false
+              ? "You seem to be offline. Reconnect and try again, or fill in the details yourself."
+              : "Couldn’t reach the card database. Try again in a moment, or fill in the details yourself. If it keeps failing, a browser extension (like an ad blocker) may be blocking db.ygoprodeck.com.") + "</p>";
+          if ($("#lookup-out")) $("#lookup-out").innerHTML = lookupMsg;
+        }, 150);
+      });
+  }
+  function applyResult(d) {
+    var c = cur(); if (!c || !d) return;
+    var ft = String(d.frameType || "effect").replace("_pendulum", "");
+    if (ft === "skill") ft = "effect";
+    if (FRAME_IDS.indexOf(ft) < 0) ft = "effect";
+    c.name = d.name; c.frame = ft;
+    if (isMonster(c)) {
+      c.attr = String(d.attribute || "dark").toLowerCase();
+      if (!ATTRS[c.attr]) c.attr = "dark";
+      c.level = ft === "link" ? d.linkval || 1 : d.level || 0;
+      c.atk = d.atk == null ? "" : String(d.atk);
+      c.def = d.def == null ? "" : String(d.def);
+      var kinds = String(d.type || "").replace(/ Monster$/, "").replace(/XYZ/g, "Xyz").split(" ").join(" / ");
+      c.typeLine = (d.race ? d.race + " / " : "") + kinds;
+    } else {
+      c.kind = KINDS[ft].indexOf(d.race) >= 0 ? d.race : "Normal";
+    }
+    var text = String(d.desc || "").replace(/\r?\n/g, " ");
+    if (ft === "normal") text = text.replace(/^''|''$/g, "");
+    c.text = text;
+    var img = d.card_images && d.card_images[0] && d.card_images[0].image_url;
+    lookupMsg = '<p class="hint ok">✓ Filled in ' + esc(d.name) + "." +
+      (img ? ' For its picture, <a href="' + esc(img) + '" target="_blank" rel="noopener">open the card picture</a>, save it, upload it to your image host, and paste your link below.' : "") + "</p>";
+    render(); renderEditor();
+  }
+
+  /* ---------- Side panels ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll("[data-p]"), function (el) {
+    el.addEventListener(el.type === "checkbox" || el.tagName === "SELECT" ? "change" : "input", function () {
+      var path = el.dataset.p.split("."), v = el.type === "checkbox" ? el.checked : el.value;
+      if (/lp$/.test(el.id)) v = clampInt(v, 0, 99999);
+      if (el.id === "turn") v = clampInt(v, 1, 999);
+      if (/hand$/.test(el.id)) {
+        /* Changing the hand size adds blank hidden cards at the end, or removes cards from the end. */
+        var cards = state[path[0]].cards, n = clampInt(v, 0, 15);
+        while (cards.length < n) cards.push(newHandCard());
+        cards.length = n;
+        if (sel && isHandKey(sel) && !target()) { sel = null; renderEditor(); }
+      } else if (path.length === 2) state[path[0]][path[1]] = v; else state[path[0]] = v;
+      render();
+      if (/name$/.test(el.id)) { fillLogWho(); if (sel) renderEditor(); }
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-l]"), function (el) {
+    el.addEventListener(el.tagName === "SELECT" ? "change" : "input", function () {
+      state.log[el.dataset.l] = el.dataset.l === "delta" ? (parseInt(el.value, 10) || 0) : el.value;
+      render();
+    });
+  });
+  $("#apply-log").addEventListener("click", function () {
+    var x = logResult(state); x.p.lp = x.after; fillSideInputs(); render(); flash($("#log-status"), "LP updated on the board.");
+  });
+
+  /* A clicked hand card or field zone opens in the editor. */
+  function clickTarget(el) {
+    var h = el.closest && el.closest("[data-h]"); if (h) return h.dataset.h;
+    var td = el.closest && el.closest("td[data-z]"); return td ? td.dataset.z : null;
+  }
+  preview.addEventListener("click", function (e) { var k = clickTarget(e.target); if (k) pick(k); });
+  preview.addEventListener("keydown", function (e) {
+    var k = clickTarget(e.target);
+    if (k && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); pick(k); }
+  });
+  function pick(k) {
+    if (!isHandKey(k)) {
+      var role = roleAt(k);
+      if (role === "phase" || role === "turn") { $("#" + (role === "phase" ? "phase" : "turn")).focus(); return; }
+    }
+    sel = k; lookupMsg = "";
+    render(); renderEditor();
+    var again = preview.querySelector(isHandKey(k) ? '[data-h="' + k + '"]' : 'td[data-z="' + k + '"]');
+    if (again) again.focus({ preventScroll: true });
+    if (window.matchMedia("(max-width: 900px)").matches) $("#zone-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /* ---------- Copy, load, clear ---------- */
+  function flash(el, msg) { el.textContent = msg; clearTimeout(el._t); el._t = setTimeout(function () { el.textContent = ""; }, 2600); }
+  function copy(text, ta, status) {
+    var fallback = function () {
+      if (ta) { ta.focus(); ta.select(); }
+      var ok = false; try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      flash(status, ok ? "Copied." : "Selected: press Ctrl+C (or ⌘C) to copy.");
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { flash(status, "Copied."); }, fallback);
+    else fallback();
+  }
+  var RAW_SKIN = $("#skin-css").textContent.trim() + "\n";
+  $("#skin-out").value = RAW_SKIN;
+  $("#copy-skin").addEventListener("click", function () {
+    var d = $("#skin-out").closest("details"); copy(RAW_SKIN, d.open ? $("#skin-out") : null, $("#skin-status"));
+  });
+  $("#copy-board").addEventListener("click", function () { copy(boardOut.value, boardOut, $("#board-status")); });
+  $("#copy-log").addEventListener("click", function () { copy(logHTML(state), null, $("#log-status")); });
+
+  $("#load-btn").addEventListener("click", function () {
+    var st = $("#load-status");
+    try {
+      state = parseBoard($("#load-in").value);
+      sel = null; lookupMsg = ""; fillSideInputs(); render(); renderEditor();
+      st.className = "hint ok"; st.textContent = "Loaded. Cards without their own info panel keep their name and stats, but not their level or text.";
+    } catch (e) {
+      st.className = "hint bad"; st.textContent = "That doesn’t look like a board from this builder. Paste the whole board code, from the first <div class=\"ygo-duel\"> to the end.";
+    }
+  });
+  $("#example-btn").addEventListener("click", function () { state = exampleState(); sel = null; lookupMsg = ""; fillSideInputs(); render(); renderEditor(); });
+  var clearBtn = $("#clear-btn");
+  clearBtn.addEventListener("click", function () {
+    if (clearBtn.dataset.armed) {
+      delete clearBtn.dataset.armed; clearBtn.textContent = "Clear the board";
+      state = emptyState(); sel = null; lookupMsg = ""; fillSideInputs(); render(); renderEditor();
+      return;
+    }
+    clearBtn.dataset.armed = "1"; clearBtn.textContent = "Click again to clear";
+    setTimeout(function () { if (clearBtn.dataset.armed) { delete clearBtn.dataset.armed; clearBtn.textContent = "Clear the board"; } }, 3500);
+  });
+
+  /* ---------- Preview uses the real Work Skin, scoped like AO3 does ---------- */
+  var scoped = RAW_SKIN.replace(/\/\*[\s\S]*?\*\//g, "").replace(/([^{}]+)\{/g, function (m, sels) {
+    return sels.split(",").map(function (x) { return "#workskin " + x.trim(); }).join(", ") + " {";
+  });
+  var style = document.createElement("style"); style.textContent = scoped; document.head.appendChild(style);
+  /* the damage line preview sits outside the board, so give it the same scope */
+  var logStyle = document.createElement("style");
+  logStyle.textContent = scoped.replace(/#workskin /g, "#workskin-log ");
+  document.head.appendChild(logStyle);
+
+  fillSideInputs(); render(); renderEditor();
+})();
+</script>
+
+</body>
+</html>

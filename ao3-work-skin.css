@@ -1,0 +1,763 @@
+/* =====================================================================
+   YU-GI-OH! DUEL BOARD — AO3 Work Skin
+
+   HOW TO INSTALL
+   AO3 Dashboard → Skins → My Work Skins → Create Work Skin, paste this
+   whole file, save. Then on your work's Edit page pick it under
+   "Select Work Skin". AO3 quietly adds "#workskin" in front of every
+   rule, so these styles only ever touch your own story.
+
+   HOW TO READ THIS FILE (a 30-second CSS primer)
+   - Anything between slash-star and star-slash, like this text, is a
+     comment. The browser ignores it; it's only here for you.
+   - A rule looks like:   .ygo-card { color: red; }
+       .ygo-card   = "every element whose class is ygo-card"
+                     (in the HTML that's  class="ygo-card")
+       { ... }     = the list of looks to give those elements
+       color: red; = one look: a "property" and its "value"
+   - ".ygo-def .ygo-art" (two names with a space) means "a ygo-art that
+     sits INSIDE a ygo-def". ".ygo-back.ygo-def" (no space) means "one
+     element that has BOTH classes".
+   - Every class here starts with "ygo-" so it can't clash with AO3's
+     own class names.
+
+   UNITS YOU'LL SEE
+   - em  = relative to the current text size. 1em = one letter-height.
+           Because the whole board is sized in em, it grows and shrinks
+           with the reader's chosen font size.
+   - %   = a share of the space available (50% = half as wide).
+   - px  = a fixed screen pixel. Used only for thin lines.
+
+   COLOURS
+   - #ffd84a is a hex colour (red-green-blue). rgba(0, 0, 0, 0.5) is
+     red, green, blue, then opacity: 0 = invisible, 1 = solid.
+   - Many rules set "background" twice: first a plain colour, then a
+     gradient. Browsers use the last one they understand, so the plain
+     colour is a safety net if a gradient ever isn't supported.
+   ===================================================================== */
+
+
+/* =====================================================================
+   1. THE BOARD FRAME
+   The green "grass" box that holds everything. In the HTML it's the
+   outermost <div class="ygo-duel">.
+   ===================================================================== */
+.ygo-duel {
+  margin: 1.5em auto;               /* space above/below; "auto" centres it */
+  max-width: 46em;                  /* never wider than this on big screens */
+  padding: 0.5em;                   /* gap between the green edge and the contents */
+  background: #5f9c45;              /* plain green (safety net) */
+  background: linear-gradient(#78b657, #4f8a39);  /* lighter green fading to darker */
+  border: 3px solid #35612a;        /* dark green outline */
+  border-radius: 0.6em;             /* rounded corners */
+  color: #fff;                      /* default text colour: white */
+  font-family: "Trebuchet MS", "Segoe UI", Verdana, Arial, sans-serif;  /* first font the reader has wins */
+  line-height: 1.2;                 /* tighter line spacing than story text */
+  text-align: left;
+  position: relative;               /* card pop-ups (section 13) are placed relative to this box */
+}
+
+/* AO3 sometimes slips extra line breaks (<br>) and paragraphs (<p>) into
+   pasted HTML. These two rules make them invisible and spaceless inside
+   the board, the card panel and the log box, so they can't break the layout. */
+.ygo-duel br, .ygo-spot br, .ygo-log br { display: none; }
+.ygo-duel p, .ygo-spot p, .ygo-log p { margin: 0; padding: 0; }
+
+
+/* =====================================================================
+   2. PLAYER PLATES (name + Life Points)
+   Pegasus's plate sits top-right, Yugi's bottom-left, like in the game.
+   ===================================================================== */
+
+/* The strip each plate sits in. */
+.ygo-bar { margin: 0.2em 0 0.4em; text-align: left; }
+/* Add ygo-bar-opp to push the plate to the right (opponent's side). */
+.ygo-bar-opp { text-align: right; }
+
+/* The dark box itself. */
+.ygo-plate {
+  display: inline-block;            /* only as wide as it needs, so it can sit left or right */
+  min-width: 13em;
+  padding: 0.3em 0.6em 0.45em;      /* top, sides, bottom */
+  text-align: left;
+  border-radius: 0.4em;
+  box-shadow: 0 0.15em 0.3em rgba(0, 0, 0, 0.45);  /* soft drop shadow underneath */
+}
+/* Colour themes: red-bordered for the opponent, blue for the hero. */
+.ygo-plate-opp { background: #4a2418; border: 2px solid #d9534f; }
+.ygo-plate-me { background: #1b2f63; border: 2px solid #4f86e8; }
+
+/* Duelist's name. */
+.ygo-pname {
+  display: block;                   /* own line */
+  margin-bottom: 0.1em;
+  font-weight: bold;
+  font-size: 1.05em;
+  text-shadow: 1px 1px 0 #000;      /* thin black shadow so it pops */
+}
+
+/* The line holding the "LP" tag and the number. */
+.ygo-lp { display: block; }
+
+/* The little red "LP" tag. */
+.ygo-lp-tag {
+  display: inline-block;
+  margin-right: 0.4em;
+  padding: 0 0.3em;
+  background: #c0392b;
+  color: #ffe066;
+  font-weight: bold;
+  font-size: 0.8em;
+  border-radius: 0.2em;
+  vertical-align: middle;           /* line it up with the big number */
+}
+
+/* The big gold Life Points number. The four text-shadows draw a brown
+   outline around each digit; the fifth adds a drop shadow. */
+.ygo-lp-num {
+  font-size: 1.7em;
+  font-weight: bold;
+  letter-spacing: 0.03em;
+  color: #ffd84a;
+  text-shadow: 1px 1px 0 #6b3a00, -1px -1px 0 #6b3a00, 1px -1px 0 #6b3a00, -1px 1px 0 #6b3a00, 0 2px 2px #000;
+  vertical-align: middle;
+}
+
+/* The LP bar is two pieces: a dark "track" (the empty bar)... */
+.ygo-lp-track {
+  display: block;
+  height: 6px;
+  margin-top: 0.25em;
+  background: #111;
+  border-radius: 3px;
+  overflow: hidden;                 /* clip the fill to the rounded ends */
+  font-size: 0;                     /* hide the invisible space character inside */
+  line-height: 0;
+}
+/* ...and a coloured "fill" inside it. Its width comes from a ygo-w class below.
+   The gradient runs red → gold → green, so a low bar looks red and a full one
+   reaches green, like in the game. */
+.ygo-lp-fill {
+  display: block;
+  height: 6px;
+  background: #e8c13a;
+  background: linear-gradient(to right, #d6332a, #f2c230, #4cc94a);
+}
+
+/* How full the LP bar is. Pick the class on the fill:
+   LP ÷ 80, rounded to the nearest 5.
+   8000 → ygo-w100,  4000 → ygo-w50,  7000 → 87.5 → ygo-w90,  0 → ygo-w0.
+   (AO3 doesn't allow per-element styles, so we need one class per size.) */
+.ygo-w0 { width: 0; }      .ygo-w5 { width: 5%; }     .ygo-w10 { width: 10%; }
+.ygo-w15 { width: 15%; }   .ygo-w20 { width: 20%; }   .ygo-w25 { width: 25%; }
+.ygo-w30 { width: 30%; }   .ygo-w35 { width: 35%; }   .ygo-w40 { width: 40%; }
+.ygo-w45 { width: 45%; }   .ygo-w50 { width: 50%; }   .ygo-w55 { width: 55%; }
+.ygo-w60 { width: 60%; }   .ygo-w65 { width: 65%; }   .ygo-w70 { width: 70%; }
+.ygo-w75 { width: 75%; }   .ygo-w80 { width: 80%; }   .ygo-w85 { width: 85%; }
+.ygo-w90 { width: 90%; }   .ygo-w95 { width: 95%; }   .ygo-w100 { width: 100%; }
+
+
+/* =====================================================================
+   3. HANDS
+   A centred row of small card backs plus a "Hand: N" pill.
+   ===================================================================== */
+.ygo-hand { margin: 0.3em 0; text-align: center; }
+
+/* One small card in a hand. Combine with ygo-back for a face-down card
+   (see section 6), or with a frame colour like ygo-spell to show it face-up. */
+.ygo-mini {
+  display: inline-block;            /* sit side by side in a row */
+  width: 1.5em;
+  height: 2.2em;
+  margin: 0 0.12em;                 /* small gap between cards */
+  vertical-align: middle;
+  border-radius: 0.15em;
+  box-shadow: 0 0.1em 0.2em rgba(0, 0, 0, 0.45);
+  font-size: 1em;
+}
+
+/* The dark rounded "Hand: 6" pill. */
+.ygo-hand-label {
+  display: inline-block;
+  margin-left: 0.5em;
+  padding: 0.1em 0.5em;
+  vertical-align: middle;
+  background: rgba(0, 0, 0, 0.35);  /* see-through black */
+  border-radius: 1em;               /* fully rounded ends */
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+
+/* =====================================================================
+   4. THE FIELD
+   The brown mat. In the HTML it's a <table> with 5 rows and 7 columns:
+     row 1: opponent's Deck | 5 Spell/Trap zones | Extra Deck
+     row 2: opponent's GY   | 5 Monster zones    | Field zone
+     row 3: Extra Monster Zones, phase badge, turn badge
+     row 4: your Field zone | 5 Monster zones    | GY
+     row 5: your Extra Deck | 5 Spell/Trap zones | Deck
+   A table is used because AO3 keeps tables intact, so the grid can't fall apart.
+   ===================================================================== */
+
+/* Lets the board scroll sideways inside its frame on very narrow phones,
+   instead of squashing the cards or stretching the page. */
+.ygo-scroll { overflow: auto; }
+
+.ygo-field {
+  width: 100%;
+  min-width: 34em;                  /* below this the board scrolls instead of shrinking */
+  margin: 0;
+  table-layout: fixed;              /* all 7 columns stay the same width */
+  border-collapse: separate;        /* needed for the rounded corners to show */
+  border-spacing: 0;
+  background: #6b5241;
+  background: linear-gradient(#5a4334, #7a5e49 50%, #5a4334);  /* darker at the edges */
+  border: 2px solid #3d2a1e;
+  border-radius: 0.4em;
+  font-size: 0.65em;                /* shrinks everything on the mat; every card size below is relative to this */
+}
+
+/* Every cell (one zone each). The first three lines undo AO3's own table
+   styling (grey borders, backgrounds), which would otherwise show through. */
+.ygo-field td, .ygo-field th {
+  width: 14.28%;                    /* 100% ÷ 7 columns */
+  padding: 0.35em 0.2em;            /* gap around each card: top/bottom, left/right */
+  border: none;
+  background: none;
+  text-align: center;
+  vertical-align: middle;
+}
+/* Extra breathing room above and below the middle (Extra Monster Zone) row. */
+.ygo-mid td { padding-top: 0.7em; padding-bottom: 0.7em; }
+
+/* An EMPTY zone: a faint card-sized outline. Any text inside (like "Field")
+   shows as a faded label in the middle. */
+.ygo-zone {
+  display: block;
+  max-width: 6.6em;                 /* same size as a card (section 5) */
+  height: 9.6em;
+  margin: 0 auto;                   /* centre it in the cell */
+  line-height: 9.6em;               /* line as tall as the box = text sits in the middle */
+  border: 0.18em solid rgba(255, 255, 255, 0.45);
+  border-radius: 0.3em;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: bold;
+  text-transform: uppercase;        /* "Field" shows as "FIELD" */
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+/* Zone outline colours depend on the row's class:
+   ygo-opp = opponent's rows (red), ygo-me = your rows (blue),
+   ygo-mid = the shared middle row (white). */
+.ygo-opp .ygo-zone { border-color: #e06a63; background: rgba(255, 190, 190, 0.18); }
+.ygo-me .ygo-zone { border-color: #5a8fee; background: rgba(190, 215, 255, 0.18); }
+.ygo-mid .ygo-zone { border-color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.22); }
+
+
+/* =====================================================================
+   5. CARDS
+   A face-up card is a ygo-card box holding three stacked parts:
+     ygo-cname  the name strip at the top
+     ygo-art    the picture box (shows the attribute kanji, e.g. 闇)
+     ygo-stats  the dark strip with ATK/DEF (or SPELL/TRAP + its type)
+   Its frame colour comes from a second class, e.g. "ygo-card ygo-effect".
+   ===================================================================== */
+.ygo-card {
+  display: block;
+  max-width: 6.6em;                 /* roughly real card proportions: 6.6 wide... */
+  height: 9.6em;                    /* ...by 9.6 tall */
+  margin: 0 auto;                   /* centre it in its zone */
+  padding: 0.25em;                  /* the coloured frame around the parts */
+  overflow: hidden;                 /* anything too big gets clipped, not spilled */
+  border: 1px solid #1a1a1a;
+  border-radius: 0.25em;
+  background: #ccc;                 /* grey until a frame colour class is added */
+  color: #1a1a1a;                   /* dark text on light frames */
+  text-align: left;
+  box-shadow: 0 0.15em 0.3em rgba(0, 0, 0, 0.5);  /* card casts a shadow on the mat */
+}
+
+/* Frame colours — one per card type, matching the real cards.
+   Each one is a top-to-bottom gradient for a slightly shiny look. */
+.ygo-normal { background: #e2c07a; background: linear-gradient(#f0d394, #c49a4c); }   /* Normal monster: yellow-tan */
+.ygo-effect { background: #d9783a; background: linear-gradient(#ec9256, #b4561f); }   /* Effect monster: orange */
+.ygo-ritual { background: #6b8fd8; background: linear-gradient(#89a8e8, #4a6cc0); }   /* Ritual: blue */
+.ygo-fusion { background: #9a62b8; background: linear-gradient(#b180cc, #74418f); }   /* Fusion: purple */
+.ygo-synchro { background: #ececec; background: linear-gradient(#ffffff, #c4c4c4); }  /* Synchro: white */
+.ygo-xyz { background: #2b2b2b; background: linear-gradient(#4a4a4a, #141414); color: #f1f1f1; }  /* Xyz: black, light text */
+.ygo-link { background: #1f5aa6; background: linear-gradient(#2f72c4, #123c74); color: #f1f1f1; } /* Link: dark blue, light text */
+.ygo-token { background: #b9b9b9; background: linear-gradient(#d6d6d6, #9a9a9a); }    /* Token: grey */
+.ygo-spell { background: #1f9e88; background: linear-gradient(#35b9a1, #127262); }    /* Spell: teal */
+.ygo-trap { background: #bf3f86; background: linear-gradient(#d6609f, #922863); }     /* Trap: magenta */
+
+/* Name strip. Fits two lines of text; a longer name is cut off. */
+.ygo-cname {
+  display: block;
+  height: 2.2em;                    /* two lines × 1.1 line height */
+  overflow: hidden;
+  padding: 0.1em 0.2em;
+  background: rgba(255, 255, 255, 0.45);  /* pale see-through strip over the frame colour */
+  border-radius: 0.15em;
+  font-size: 0.8em;
+  line-height: 1.1;
+  font-weight: bold;
+}
+/* On dark frames (Xyz, Link) the strip goes dark instead, to keep the white text readable. */
+.ygo-xyz .ygo-cname, .ygo-link .ygo-cname { background: rgba(0, 0, 0, 0.35); }
+
+/* Picture box. Its colour comes from an attribute class (section 7).
+   font-size 2em makes the kanji big; height and line-height are equal so the
+   kanji sits in the vertical middle. */
+.ygo-art {
+  display: block;
+  height: 2.6em;
+  margin: 0.1em 0;
+  overflow: hidden;
+  background: #333;
+  background: radial-gradient(circle, #5a5a5a, #1b1b1b);  /* grey glow, used if no attribute class is given */
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 2em;
+  line-height: 2.6em;
+  text-align: center;
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9);
+}
+/* Optional: put <img src="..."> inside ygo-art to show just the artwork (a
+   cropped picture) in the picture box. For whole card pictures, see section 13. */
+.ygo-art img { display: block; width: 100%; height: 100%; }
+
+/* The dark ATK/DEF strip at the bottom of the card. */
+.ygo-stats {
+  display: block;
+  padding: 0.1em 0.25em;
+  background: rgba(0, 0, 0, 0.72);
+  border-radius: 0.15em;
+  color: #fff;
+  font-size: 0.76em;
+  line-height: 1.2;
+  font-weight: bold;
+  white-space: nowrap;              /* never wrap "ATK 2500" onto two lines */
+  overflow: hidden;
+}
+/* ygo-a = the top line (ATK), ygo-d = the bottom line (DEF).
+   In Attack Position, ATK is bright gold and DEF is faded, like in the game. */
+.ygo-a, .ygo-d { display: block; }
+.ygo-a { color: #ffd84a; }
+.ygo-d { color: rgba(255, 255, 255, 0.45); }
+/* On Spells/Traps the same two lines say e.g. "SPELL" / "Normal", so both stay plain white. */
+.ygo-spell .ygo-a, .ygo-trap .ygo-a { color: #fff; }
+.ygo-spell .ygo-d, .ygo-trap .ygo-d { color: rgba(255, 255, 255, 0.75); }
+
+
+/* =====================================================================
+   6. DEFENSE POSITION AND FACE-DOWN CARDS
+   ===================================================================== */
+
+/* Add ygo-def to a card to lay it sideways (Defense Position):
+   the box becomes wide and short, the picture moves to the left half,
+   and the stats move to the right half. DEF turns bright, ATK fades. */
+.ygo-def { max-width: 9.6em; height: 6.6em; }                 /* width and height swapped */
+.ygo-def .ygo-cname { height: 1.1em; white-space: nowrap; }   /* name on one line only */
+.ygo-def .ygo-art { float: left; width: 45%; height: 1.9em; line-height: 1.9em; }  /* "float: left" = sit on the left, let the next part sit beside it */
+.ygo-def .ygo-stats { margin: 0.6em 0 0 50%; }                /* start halfway across, beside the picture */
+.ygo-def .ygo-a { color: rgba(255, 255, 255, 0.45); }
+.ygo-def .ygo-d { color: #9fd0ff; }
+
+/* While the pointer is over any card, a thin yellow outline marks it,
+   like the cursor in the game. */
+.ygo-card:hover { outline: 2px solid #fff36b; }
+
+/* Add ygo-back for a face-down card: set Spell/Trap, set monster, the Deck,
+   the Extra Deck or a card in hand. The ring-shaped gradient draws the brown
+   card-back with the black vortex in the middle. */
+.ygo-back {
+  padding: 0;
+  height: 9.5em;                    /* a hair shorter, because its border is thicker than a normal card's */
+  background: #4a2a12;
+  background: radial-gradient(circle, #000 0, #000 16%, #2a1406 24%, #6e3b15 44%, #3a1c08 58%, #8a5222 100%);
+  border: 0.3em solid #7a4a1f;
+}
+/* Face-down AND sideways = a set monster in Defense Position. */
+.ygo-back.ygo-def { height: 6.5em; }
+/* Face-down in hand: same back, thinner border to suit the tiny size. */
+.ygo-mini.ygo-back { height: 2.2em; border-width: 0.15em; }
+
+
+/* =====================================================================
+   7. ATTRIBUTE COLOURS
+   Put one of these on a ygo-art box (picture colour) or on a ygo-attr
+   badge in the card panel. Matching kanji:
+     DARK 闇   LIGHT 光   EARTH 地   WATER 水   FIRE 炎   WIND 風
+     DIVINE 神   Spell 魔   Trap 罠
+   Each is a glow: bright in the centre, dark at the edges.
+   ===================================================================== */
+.ygo-at-dark { background: #3a2250; background: radial-gradient(circle, #7a4aa6, #1e0f2d); }
+.ygo-at-light { background: #b8962a; background: radial-gradient(circle, #fff1a8, #a07a12); }
+.ygo-at-earth { background: #6b4b2a; background: radial-gradient(circle, #a77c4c, #3f2a14); }
+.ygo-at-water { background: #1f5f9e; background: radial-gradient(circle, #5aa6e8, #0f3360); }
+.ygo-at-fire { background: #a8321e; background: radial-gradient(circle, #f07a3c, #5e1408); }
+.ygo-at-wind { background: #2f7d3a; background: radial-gradient(circle, #7ed27a, #174a1d); }
+.ygo-at-divine { background: #9b7a1a; background: radial-gradient(circle, #ffe9a0, #7a5a0a); }
+.ygo-at-spell { background: #0f5a4d; background: radial-gradient(circle, #3fc4aa, #0b3f36); }
+.ygo-at-trap { background: #6a1846; background: radial-gradient(circle, #e070b0, #4a0d30); }
+
+
+/* =====================================================================
+   8. PILES (Deck, Extra Deck, Graveyard)
+   A pile is a card with ygo-pile added, holding a big number (ygo-count)
+   and a small label (ygo-plabel). Use ygo-back for the Deck / Extra Deck,
+   or the top card's frame colour for the GY (e.g. ygo-trap).
+   ===================================================================== */
+
+/* Two offset shadows behind the card make it look like a stack. */
+.ygo-pile { text-align: center; box-shadow: 0.12em 0.15em 0 #2a1a0e, 0.24em 0.3em 0 #1d120a, 0 0.3em 0.5em rgba(0, 0, 0, 0.5); }
+
+/* The big white number, with a black outline (four shadows) so it shows on any colour. */
+.ygo-count {
+  display: block;
+  margin-top: 1.25em;               /* pushes the number down to about the middle of the card */
+  color: #fff;
+  font-size: 2.4em;
+  line-height: 1;
+  font-weight: bold;
+  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+}
+/* The small "DECK" / "GY" / "EXTRA" label under it. */
+.ygo-plabel {
+  display: block;
+  margin-top: 0.4em;
+  color: #fff;
+  font-size: 0.75em;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 1px 1px 0 #000;
+}
+
+
+/* =====================================================================
+   9. HIGHLIGHTS
+   Extra classes you can add to any card.
+   ===================================================================== */
+
+/* Extra Monster Zone cards can belong to either duelist, so add one of
+   these to show whose it is: a blue ring (yours) or a red ring (theirs). */
+.ygo-mine { box-shadow: 0 0 0 0.2em #4f86e8, 0 0.15em 0.3em rgba(0, 0, 0, 0.5); }
+.ygo-theirs { box-shadow: 0 0 0 0.2em #e06a63, 0 0.15em 0.3em rgba(0, 0, 0, 0.5); }
+
+/* Golden glow on the card the scene is about (like the game's cursor).
+   First shadow = solid yellow ring, second = soft blurred glow. */
+.ygo-focus { box-shadow: 0 0 0 0.2em #fff36b, 0 0 1em 0.3em #ffd400; }
+
+
+/* =====================================================================
+   10. PHASE AND TURN BADGES (middle row of the field)
+   ===================================================================== */
+
+/* Pale blue box, e.g. "DP", "SP", "MP1", "BP", "MP2", "EP". */
+.ygo-phase {
+  display: inline-block;
+  padding: 0.3em 0.6em;
+  background: #dce8f7;
+  border: 0.15em solid #7fa6e6;
+  border-radius: 0.3em;
+  color: #2d63c8;
+  font-size: 1.3em;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+}
+
+/* The "Turn / 3" box: ygo-turn-l is the word, ygo-turn-n the number. */
+.ygo-turn {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  background: #ece7d8;
+  border: 0.15em solid #8a8a8a;
+  border-radius: 0.35em;
+  color: #2f4fa8;
+  font-weight: bold;
+  line-height: 1.1;
+  text-align: center;
+}
+.ygo-turn-l { display: block; font-size: 1.1em; }
+.ygo-turn-n { display: block; font-size: 1.6em; color: #3a3a3a; }
+
+
+/* =====================================================================
+   11. CARD SPOTLIGHT (the info panel)
+   The green panel showing one card's full details, like the panel on the
+   left of the game screen. Works inside the board or on its own in the
+   story, so it sets its own font. Each part is on its own line:
+     ygo-spot-top    level stars + attribute badge
+     ygo-spot-stats  ATK / DEF
+     ygo-spot-name   card name (yellow)
+     ygo-spot-type   [Type / Kind] (green)
+     ygo-spot-text   effect or flavour text (italic)
+   ===================================================================== */
+.ygo-spot {
+  display: block;
+  margin: 0.6em 0 0.2em;
+  padding: 0.5em 0.75em 0.6em;
+  background: #24482f;
+  background: linear-gradient(#2d5c3a, #1c3a26);
+  border: 2px solid #5b7fd6;
+  border-radius: 0.4em;
+  box-shadow: 0 0.15em 0.3em rgba(0, 0, 0, 0.45);
+  color: #f4f4f4;
+  font-family: "Trebuchet MS", "Segoe UI", Verdana, Arial, sans-serif;
+  line-height: 1.3;
+  text-align: left;
+  min-height: 11em;                 /* keeps panels from jumping in size when a hover panel (section 14) covers this one */
+}
+.ygo-spot-top { display: block; margin-bottom: 0.25em; font-weight: bold; }
+
+/* The orange star coin before "×7". border-radius 50% turns the square into a circle. */
+.ygo-lvl {
+  display: inline-block;
+  width: 1.4em;
+  height: 1.4em;
+  margin-right: 0.15em;
+  line-height: 1.4em;
+  text-align: center;
+  border-radius: 50%;
+  background: #e8541e;
+  background: radial-gradient(circle at 35% 35%, #ffb347, #d93a12);  /* highlight off-centre = looks round and shiny */
+  color: #ffe46b;
+  font-size: 0.9em;
+}
+
+/* The rounded attribute badge ("闇 DARK"). Give it a ygo-at-... class for its colour. */
+.ygo-attr {
+  display: inline-block;
+  margin-left: 0.6em;
+  padding: 0.05em 0.5em;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 1em;
+  color: #fff;
+  font-size: 0.85em;
+  font-weight: bold;
+}
+
+/* The darker ATK/DEF bar. */
+.ygo-spot-stats {
+  display: block;
+  margin-bottom: 0.2em;
+  padding: 0.15em 0.4em;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0.25em;
+}
+.ygo-s-atk, .ygo-s-def { display: inline-block; margin-right: 1em; font-size: 1.25em; font-weight: bold; }
+.ygo-s-atk { color: #ffd84a; }      /* ATK in gold */
+.ygo-s-def { color: #9fd0ff; }      /* DEF in light blue */
+
+.ygo-spot-name { display: block; color: #ffe14d; font-size: 1.3em; font-weight: bold; text-shadow: 1px 1px 0 #000; }
+.ygo-spot-type { display: block; color: #a6e88a; }
+.ygo-spot-text { display: block; margin-top: 0.3em; font-style: italic; }
+
+
+/* =====================================================================
+   12. DUEL LOG LINE
+   A dark banner for attacks, damage and healing, used in the story
+   between boards. The red stripe on the left means damage; add
+   ygo-log-heal to make the stripe and the number green for LP gains.
+   ===================================================================== */
+.ygo-log {
+  display: block;
+  max-width: 46em;
+  margin: 1em auto;
+  padding: 0.45em 0.75em;
+  background: #1d1d26;
+  border-left: 0.35em solid #e0524a;  /* the coloured stripe on the left */
+  border-radius: 0.3em;
+  color: #f1f1f1;
+  font-family: "Trebuchet MS", "Segoe UI", Verdana, Arial, sans-serif;
+  font-weight: bold;
+  line-height: 1.4;
+  text-align: left;
+}
+.ygo-log-act { display: block; color: #ffd84a; }   /* first line: what happened, in gold */
+.ygo-delta { margin-left: 0.4em; color: #ff6b5e; } /* the "−2500", in red */
+.ygo-log-heal { border-left-color: #4cc94a; }
+.ygo-log-heal .ygo-delta { color: #7be37a; }       /* "+1000" in green when healing */
+
+
+/* =====================================================================
+   13. REAL CARD PICTURES (optional)
+   AO3 can't store images, so upload each card picture to an image host
+   (Imgur, Postimages, etc.) and paste its direct link (the one ending
+   in .png or .jpg) into src="...". Three ways to use them:
+
+   A) POP-UP: put this line inside any card, and the full card appears
+      when a reader points at it (or taps it on a phone):
+        <span class="ygo-pop"><img src="LINK" alt="Dark Magician" width="100"></span>
+   B) CARD ON THE FIELD: give the card ygo-pic and use the picture
+      instead of the name strip and picture box:
+        <div class="ygo-card ygo-pic"><img src="LINK" alt="Dark Magician" width="66"> ...stats strip... </div>
+   C) PICTURE IN THE INFO PANEL: first thing inside ygo-spot:
+        <span class="ygo-spot-img"><img src="LINK" alt="Dark Magician" width="110"></span>
+
+   The width="..." numbers only matter for readers who switch work
+   skins off: they stop the pictures from showing at full size.
+   ===================================================================== */
+
+/* Phones have no mouse, so "pointing" means tapping. A pointer cursor is
+   what tells iPhones a card can be tapped. Tapping anywhere else closes it. */
+.ygo-card { cursor: pointer; }
+
+/* A) The pop-up. Hidden until its card is pointed at.
+   Sideways, it's placed against the edge of the whole board (.ygo-duel),
+   not the card, so the field's edges can't cut it off.
+   Up and down, no "top" is given, so it stays at the height of its own
+   card; the negative margin then lifts it so it sits beside the card.
+   By default it appears at the RIGHT edge of the board... */
+.ygo-pop {
+  display: none;                    /* hidden by default */
+  position: absolute;               /* lifted out of the layout, floats over the board */
+  right: 0.8em;
+  margin-top: -12em;                /* lift it up level with its card */
+  z-index: 10;                      /* drawn above everything else */
+  width: 20em;                      /* about 200px at normal text size */
+  max-width: 45%;                   /* but never more than ~half the board on phones */
+  padding: 0.3em;
+  background: #111;
+  border: 2px solid #ffd84a;
+  border-radius: 0.4em;
+  box-shadow: 0 0.4em 1.2em rgba(0, 0, 0, 0.6);
+}
+/* ...but for cards in the right-hand columns (5th cell of the row onward:
+   "td + td + td + td + td" means "a cell with at least 4 cells before it")
+   it appears at the LEFT edge instead, so it never covers its own card. */
+.ygo-field td + td + td + td + td .ygo-pop { right: auto; left: 0.8em; }
+/* Cards in your own rows (bottom half) lift it higher, so the picture
+   doesn't hang down past the bottom of the screen. */
+.ygo-me .ygo-pop { margin-top: -20em; }
+/* The trigger: when the pointer is over a card, show the pop-up inside it. */
+.ygo-card:hover .ygo-pop { display: block; }
+/* The picture fills the pop-up's width; height follows automatically. */
+.ygo-pop img { display: block; width: 100%; height: auto; }
+
+/* B) A real card picture on the field. The card box loses its frame and
+   takes the picture's own height, and the ATK/DEF strip is pulled up
+   (negative margin) to sit over the bottom of the picture.
+   "position: relative" makes the browser draw the strip on top of the
+   picture instead of underneath it. */
+.ygo-pic { height: auto; padding: 0; background: #111; }
+.ygo-pic img { display: block; width: 100%; height: auto; }
+.ygo-pic .ygo-stats { position: relative; margin-top: -2.6em; border-radius: 0; background: rgba(0, 0, 0, 0.8); }
+
+/* C) The picture in the info panel sits on the left; the text flows on its right. */
+.ygo-spot { overflow: hidden; }     /* makes the panel tall enough to fit the picture */
+.ygo-spot-img {
+  float: left;
+  width: 7em;
+  margin: 0.1em 0.8em 0.2em 0;
+}
+.ygo-spot-img img { display: block; width: 100%; height: auto; border-radius: 0.2em; box-shadow: 0 0.15em 0.4em rgba(0, 0, 0, 0.5); }
+/* Keeps the dark ATK/DEF bar beside the picture instead of running under it. */
+.ygo-spot-stats { overflow: hidden; }
+
+
+/* =====================================================================
+   14. HOVER INFO PANELS (optional)
+   Makes the info panel at the bottom of the board switch to whichever
+   card the reader points at (or taps on a phone).
+   AO3 doesn't allow scripts, so a panel can't really change what it
+   says. Instead, each card carries its OWN hidden info panel inside it.
+   Pointing at the card shows that panel, laid exactly over the default
+   panel at the bottom of the board. Move away and it hides again,
+   uncovering the default panel.
+
+   To give a card one, put a normal info panel (same parts as section 11)
+   inside the card, as its last part, with ygo-hover added:
+     <div class="ygo-spot ygo-hover"> ...name, type, text... </div>
+   Keep the board's default panel (the one at the bottom): the hover
+   panels need it to sit on.
+   ===================================================================== */
+.ygo-hover {
+  display: none;                    /* hidden until its card is pointed at */
+  position: absolute;               /* placed against the whole board (.ygo-duel)... */
+  left: 0.5em;                      /* ...lined up with the default panel's edges: */
+  right: 0.5em;                     /*    the board's 0.5em padding on each side, */
+  bottom: 0.7em;                    /*    plus the default panel's 0.2em bottom margin */
+  margin: 0;
+  min-height: 13em;                 /* a bit taller than the default panel, so none of it peeks out above */
+  z-index: 9;                       /* above the default panel (pop-ups are 10, so they stay on top) */
+  font-size: 1.54em;                /* the field shrinks text to 0.65em; this undoes it (1 ÷ 0.65) */
+  border-color: #ffd84a;            /* gold edge, so it's clear this is the pointed-at card */
+}
+/* The trigger: pointing at a card shows the hover panel inside it. */
+.ygo-card:hover .ygo-hover { display: block; }
+
+
+/* =====================================================================
+   15. FACE-UP CARDS IN A HAND (optional)
+   For a card a duelist reveals (or to show the hero's own hand), swap
+   its small card back for a bigger face-up card:
+     <div class="ygo-mini ygo-mini-up ygo-spell">
+       <span class="ygo-mini-name">Toon World</span>
+       <span class="ygo-mini-art ygo-at-spell">魔</span>
+     </div>
+   Use a frame colour class (ygo-spell, ygo-effect...) like on the field.
+   For a real picture instead, add ygo-mini-pic and put an <img> inside
+   in place of the two spans. A ygo-pop line and a hover info panel
+   (sections 13 and 14) work inside it too.
+   ===================================================================== */
+
+/* AO3 wraps a hand's cards in a paragraph; this keeps them in one row. */
+.ygo-hand p { display: inline; }
+
+/* The face-up hand card: twice the size of a card back. */
+.ygo-mini-up {
+  width: 3em;
+  height: 4.4em;
+  margin: 0 0.15em 0.2em;
+  padding: 0.15em;
+  overflow: hidden;
+  border: 1px solid #1a1a1a;
+  color: #1a1a1a;
+  text-align: left;
+  cursor: pointer;
+}
+.ygo-mini-up:hover { outline: 2px solid #fff36b; }
+
+/* Its name strip (tiny text, two lines at most). */
+.ygo-mini-name {
+  display: block;
+  height: 2.2em;
+  overflow: hidden;
+  padding: 0.05em 0.1em;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 0.1em;
+  font-size: 0.5em;
+  line-height: 1.1;
+  font-weight: bold;
+}
+.ygo-xyz .ygo-mini-name, .ygo-link .ygo-mini-name { background: rgba(0, 0, 0, 0.35); }
+
+/* Its picture box with the attribute kanji (colour from a ygo-at class). */
+.ygo-mini-art {
+  display: block;
+  height: 2.05em;
+  margin-top: 0.1em;
+  background: #333;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 1.4em;
+  line-height: 2.05em;
+  text-align: center;
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9);
+}
+
+/* With a real picture: no frame, the picture fills the card. */
+.ygo-mini-pic { padding: 0; background: #111; }
+.ygo-mini-pic img { display: block; width: 100%; height: 100%; }
+
+/* Pop-ups and hover info panels on hand cards. */
+.ygo-mini:hover .ygo-pop, .ygo-mini:hover .ygo-hover { display: block; }
+/* The field shrinks text to 0.65em and the pop-up is sized for that, so
+   match it here; and drop the pop-up just below the hand. */
+.ygo-hand .ygo-pop { font-size: 0.65em; margin-top: 0.8em; }
+/* Hands aren't shrunk, so the info panel needs no size correction. */
+.ygo-hand .ygo-hover { font-size: 1em; }
