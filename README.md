@@ -2,7 +2,7 @@
 
 Make Yu-Gi-Oh! duel boards for your AO3 fic by clicking and typing — no code to write.
 
-**Open the builder:** `index.html` (when GitHub Pages is on, it lives at `https://<your-username>.github.io/duel-board-builder/`).
+**Open the builder:**
 
 ## What it does
 
