@@ -29,7 +29,3 @@ Make Yu-Gi-Oh! duel boards for your AO3 fic by clicking and typing — no code t
 ## Pictures
 
 AO3 can't store images, so upload card pictures to an image host and paste the **direct** link (it usually ends in `.png` or `.jpg`). YGOPRODeck asks people not to link its card pictures directly, so save them and re-host them instead.
-
-## Where to host the builder
-
-The card lookup needs to reach `db.ygoprodeck.com`. It works from GitHub Pages and when the file is opened straight from your computer. Some hosts block it: Neocities' free plan, for example, only lets pages talk to their own site, so Look up fails there (everything else still works).
