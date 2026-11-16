@@ -217,6 +217,24 @@ input:disabled + span { opacity: 0.5; }
 .pic-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: start; }
 .pic-row img { width: 56px; height: auto; border-radius: 3px; border: 1px solid var(--line); }
 
+.gy-list { display: grid; gap: 4px; margin: 0 0 8px; padding: 0; list-style: none; }
+.gy-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+  font-size: 0.9rem;
+}
+.gy-row img, .gy-row .gy-swatch { display: block; width: 30px; height: 44px; border-radius: 2px; object-fit: cover; }
+.gy-row .gy-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gy-row .gy-name small { display: block; color: var(--muted); font-size: 0.78rem; }
+.gy-row .gy-btns { display: flex; gap: 2px; }
+.gy-row .gy-btns button { padding: 3px 8px; }
+
 /* ---------- Preview ---------- */
 .board-panel .hint { margin-bottom: 8px; }
 .preview { min-width: 0; }
@@ -604,13 +622,26 @@ details[open] summary { margin-bottom: 8px; }
    6. DEFENSE POSITION AND FACE-DOWN CARDS
    ===================================================================== */
 
-/* Add ygo-def to a card to lay it sideways (Defense Position):
-   the box becomes wide and short, the picture moves to the left half,
-   and the stats move to the right half. DEF turns bright, ATK fades. */
-.ygo-def { max-width: 9.6em; height: 6.6em; }                 /* width and height swapped */
-.ygo-def .ygo-cname { height: 1.1em; white-space: nowrap; }   /* name on one line only */
-.ygo-def .ygo-art { float: left; width: 45%; height: 1.9em; line-height: 1.9em; }  /* "float: left" = sit on the left, let the next part sit beside it */
-.ygo-def .ygo-stats { margin: 0.6em 0 0 50%; }                /* start halfway across, beside the picture */
+/* Add ygo-def to a card to lay it sideways (Defense Position).
+   The box is as wide as its zone, and its height comes from the bottom
+   padding: a percentage of the zone's width, so the box always has a
+   sideways card's shape (68.75% = 6.6 ÷ 9.6), even in the narrow zones
+   of a phone screen. Inside, top to bottom: the name on one line, DEF
+   (bright), ATK (faded), then the picture box. A small card cuts off its
+   bottom first, so the parts that matter most come first.
+   "display: flex" is what lets the parts be put in a new order. */
+.ygo-def {
+  display: flex;
+  flex-direction: column;
+  max-width: none;                  /* as wide as the zone */
+  height: 0;                        /* no height of its own... */
+  padding: 0.2em 0.2em 68.75%;      /* ...it all comes from this bottom padding */
+}
+.ygo-def > p { display: contents; } /* in case AO3 wraps the parts in a paragraph */
+.ygo-def .ygo-cname, .ygo-def .ygo-stats, .ygo-def .ygo-art { flex-shrink: 0; }  /* keep their size although the box has no height */
+.ygo-def .ygo-cname { height: 1.1em; white-space: nowrap; text-overflow: ellipsis; }  /* name on one line; "…" if too long */
+.ygo-def .ygo-stats { order: 1; display: flex; flex-direction: column-reverse; margin-top: 0.15em; }  /* right under the name, DEF above ATK */
+.ygo-def .ygo-art { order: 2; height: 1.3em; margin: 0.1em 0 0; font-size: 1.6em; line-height: 1.3em; }  /* last, so it's the part a small card cuts off */
 .ygo-def .ygo-a { color: rgba(255, 255, 255, 0.45); }
 .ygo-def .ygo-d { color: #9fd0ff; }
 
@@ -628,8 +659,9 @@ details[open] summary { margin-bottom: 8px; }
   background: radial-gradient(circle, #000 0, #000 16%, #2a1406 24%, #6e3b15 44%, #3a1c08 58%, #8a5222 100%);
   border: 0.3em solid #7a4a1f;
 }
-/* Face-down AND sideways = a set monster in Defense Position. */
-.ygo-back.ygo-def { height: 6.5em; }
+/* Face-down AND sideways = a set monster in Defense Position: just the
+   card back, in the same sideways shape. */
+.ygo-back.ygo-def { height: 0; padding: 0 0 68.75%; }
 /* Face-down in hand: same back, thinner border to suit the tiny size. */
 .ygo-mini.ygo-back { height: 2.2em; border-width: 0.15em; }
 
@@ -886,6 +918,10 @@ details[open] summary { margin-bottom: 8px; }
 .ygo-card:hover .ygo-pop { display: block; }
 /* The picture fills the pop-up's width; height follows automatically. */
 .ygo-pop img { display: block; width: 100%; height: auto; }
+/* Pop-ups never cover words. The info panels (sections 11 and 14) are
+   drawn above them, so a picture that runs into a panel slides underneath
+   it. "position: relative" is what lets z-index work on the panel. */
+.ygo-spot { position: relative; z-index: 11; }
 
 /* B) A real card picture on the field. The card box loses its frame and
    takes the picture's own height, and the ATK/DEF strip is pulled up
@@ -895,6 +931,16 @@ details[open] summary { margin-bottom: 8px; }
 .ygo-pic { height: auto; padding: 0; background: #111; }
 .ygo-pic img { display: block; width: 100%; height: auto; }
 .ygo-pic .ygo-stats { position: relative; margin-top: -2.6em; border-radius: 0; background: rgba(0, 0, 0, 0.8); }
+/* A real card picture in Defense Position (ygo-pic and ygo-def together):
+   the picture itself is turned on its side, like a set monster in the
+   game, with only the DEF strip over its bottom edge. The picture is
+   made as wide as the sideways box is tall, moved so its centre sits on
+   the box's centre, then turned a quarter-turn to the left.
+   ("> img" = only the card's own picture, not the pop-up's.) */
+.ygo-def.ygo-pic { display: block; height: 0; padding: 0 0 68.75%; }
+.ygo-def.ygo-pic > img { width: 68.75%; margin: -15.625% 0 0 15.625%; transform: rotate(270deg); }
+.ygo-def.ygo-pic .ygo-stats { display: block; margin-top: -15.625%; top: -1.15em; }  /* pulled up from under the picture */
+.ygo-def.ygo-pic .ygo-a { display: none; }
 
 /* C) The picture in the info panel sits on the left; the text flows on its right. */
 .ygo-spot { overflow: hidden; }     /* makes the panel tall enough to fit the picture */
@@ -932,7 +978,7 @@ details[open] summary { margin-bottom: 8px; }
   bottom: 0.7em;                    /*    plus the default panel's 0.2em bottom margin */
   margin: 0;
   min-height: 13em;                 /* a bit taller than the default panel, so none of it peeks out above */
-  z-index: 9;                       /* above the default panel (pop-ups are 10, so they stay on top) */
+  z-index: 12;                      /* above the default panel (11) and the pop-ups (10) */
   font-size: 1.54em;                /* the field shrinks text to 0.65em; this undoes it (1 ÷ 0.65) */
   border-color: #ffd84a;            /* gold edge, so it's clear this is the pointed-at card */
 }
@@ -1008,8 +1054,71 @@ details[open] summary { margin-bottom: 8px; }
 /* The field shrinks text to 0.65em and the pop-up is sized for that, so
    match it here; and drop the pop-up just below the hand. */
 .ygo-hand .ygo-pop { font-size: 0.65em; margin-top: 0.8em; }
+/* Your own hand sits just above the info panel, so its pop-ups open
+   UPWARD, over your side of the field, instead of down over the panel.
+   ".ygo-scroll ~ .ygo-hand" means "a hand that comes after the field".
+   The lift is the card's height (6.8em) + the picture's (30.2em) + a gap.
+   On a phone the picture is smaller (max-width 45% in section 13), so it
+   just floats a little higher. */
+.ygo-scroll ~ .ygo-hand .ygo-pop { margin-top: -37.6em; }
 /* Hands aren't shrunk, so the info panel needs no size correction. */
 .ygo-hand .ygo-hover { font-size: 1em; }
+
+/* =====================================================================
+   16. GRAVEYARD AND EXTRA DECK LISTS (optional)
+   Lets readers see the cards in a Graveyard or an Extra Deck. Pointing
+   at (or tapping) the pile shows its cards over the info panel, the same
+   way a hover info panel does (section 14). Put this inside the pile,
+   after its "GY" or "Extra" label (for a Graveyard, newest card first):
+     <div class="ygo-spot ygo-hover ygo-gy">
+     <span class="ygo-spot-name">Yugi’s Graveyard</span>
+     <span class="ygo-spot-type">[2 cards, newest first]</span>
+     <span class="ygo-gy-list">
+     <span class="ygo-gy-card ygo-spell"><img src="LINK" alt="Pot of Greed" width="44"><span class="ygo-gy-name">Pot of Greed</span></span>
+     <span class="ygo-gy-card ygo-trap ygo-gy-text"><span class="ygo-gy-name">Mirror Force</span></span>
+     </span>
+     </div>
+   Each card is a small tile in its frame colour (ygo-spell, ygo-trap...):
+   its picture with the name underneath or, with ygo-gy-text and no
+   picture, just its name. An Extra Deck list works the same way: change
+   the title to "Yugi’s Extra Deck" and list the cards readers know about.
+   ===================================================================== */
+/* A big list scrolls inside the panel instead of growing past the
+   top of the board and over the story. */
+.ygo-gy { max-height: 36em; overflow: auto; }
+/* AO3 wraps the cards in a paragraph; this keeps them in rows. */
+.ygo-gy-list p { display: inline; }
+.ygo-gy-list { display: block; margin-top: 0.45em; }
+.ygo-gy-card {
+  display: inline-block;            /* side by side, wrapping onto a new row when full */
+  width: 4.6em;
+  margin: 0 0.3em 0.4em 0;
+  padding: 0.15em;
+  vertical-align: top;
+  border: 1px solid #1a1a1a;
+  border-radius: 0.2em;
+  box-shadow: 0 0.1em 0.25em rgba(0, 0, 0, 0.5);
+}
+.ygo-gy-card img { display: block; width: 100%; height: auto; }
+/* The name under the picture: small, three lines at most. */
+.ygo-gy-name {
+  display: block;
+  height: 3.45em;
+  overflow: hidden;
+  margin-top: 0.15em;
+  padding: 0 0.15em;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 0.1em;
+  color: #1a1a1a;
+  font-size: 0.62em;
+  font-style: normal;
+  font-weight: bold;
+  line-height: 1.15;
+}
+/* On dark frames (Xyz, Link) the name strip goes dark, with light text. */
+.ygo-gy-card.ygo-xyz .ygo-gy-name, .ygo-gy-card.ygo-link .ygo-gy-name { background: rgba(0, 0, 0, 0.4); color: #f1f1f1; }
+/* No picture: the name fills a tile as tall as a picture tile. */
+.ygo-gy-text .ygo-gy-name { height: 14.3em; margin-top: 0; }
 </script>
 
 <div class="page">
@@ -1120,7 +1229,7 @@ details[open] summary { margin-bottom: 8px; }
           <span class="hint" id="load-status" aria-live="polite"></span>
         </div>
       </details>
-      <p class="hint" style="margin-top:12px">Your board is saved in this browser as you work. Card details come from YGOPRODeck's free card database.</p>
+      <p class="hint" style="margin-top:12px">Your board is saved in this browser as you work. Card details come from YGOPRODeck's free card database, and card pictures from Cardsrealm.</p>
     </section>
   </div>
 </div>
@@ -1151,6 +1260,8 @@ details[open] summary { margin-bottom: 8px; }
   var ROW_CLASS = ["ygo-opp", "ygo-opp", "ygo-mid", "ygo-me", "ygo-me"];
   var PILES = ["deck", "extra", "gy"];
   var PILE_LABEL = { deck: "Deck", extra: "Extra", gy: "GY" };
+  /* Piles whose cards can be listed for readers (section 16 of the Work Skin). */
+  var LISTED = ["gy", "extra"];
   var ROLE_NAME = { deck: "Deck", extra: "Extra Deck", gy: "Graveyard", st: "Spell & Trap Zone", mon: "Monster Zone", field: "Field Zone", emz: "Extra Monster Zone" };
   var roleAt = function (k) { var p = k.split("-"); return LAYOUT[+p[0]][+p[1]]; };
   var ownerOfRow = function (r) { return r < 2 ? "opp" : r > 2 ? "me" : null; };
@@ -1187,6 +1298,19 @@ details[open] summary { margin-bottom: 8px; }
     s.turn = 3; s.phase = "MP1";
     s.zones["0-0"] = { count: 32, top: "back" }; s.zones["0-6"] = { count: 1, top: "back" }; s.zones["1-0"] = { count: 6, top: "trap" };
     s.zones["3-6"] = { count: 1, top: "spell" }; s.zones["4-0"] = { count: 5, top: "back" }; s.zones["4-6"] = { count: 32, top: "back" };
+    var CR = "https://cdn.cardsrealm.com/images/cartas/";
+    s.zones["1-0"].list = [
+      { name: "Mirror Force", frame: "trap", img: CR + "ys15-saber-force-starter-deck/en/med/mirror-force-end16.png?2975" },
+      { name: "Toon Summoned Skull", frame: "effect", img: CR + "db1-dark-beginning-1/en/med/toon-summoned-skull-en040.png?572" },
+      { name: "Dragon Capture Jar", frame: "trap", img: CR + "db1-dark-beginning-1/en/med/dragon-capture-jar-en111.png?7924" },
+      { name: "Toon Mermaid", frame: "effect", img: CR + "db1-dark-beginning-1/en/med/toon-mermaid-en039.png?6261" },
+      { name: "Toon Table of Contents", frame: "spell", img: CR + "db2-dark-beginning-2/en/med/toon-table-of-contents-en121.png?5115" },
+      { name: "Manga Ryu-Ran", frame: "effect", img: CR + "db1-dark-beginning-1/en/med/manga-ryu-ran-en038.png?6801" }];
+    s.zones["4-0"].list = [
+      { name: "Dark Paladin", frame: "fusion", img: CR + "dr1-dark-revelation-volume-1/en/med/dark-paladin-en160.png?8827" },
+      { name: "Dark Magician Girl the Dragon Knight", frame: "fusion", img: CR + "drlg-dragons-of-legend/en/med/dark-magician-girl-the-dragon-knight-en004.png?233" }];
+    s.zones["0-6"].list = [{ name: "Thousand-Eyes Restrict", frame: "fusion", img: CR + "db1-dark-beginning-1/en/med/thousand-eyes-restrict-en195.png?1507" }];
+    s.zones["3-6"].list = [{ name: "Pot of Greed", frame: "spell", img: CR + "bp02-battle-pack-2-war-of-the-giants/en/med/pot-of-greed-en129.png?2521" }];
     var img = "https://cdn.cardsrealm.com/images/cartas/ct13-2016-mega-tins/en/med/dark-magician-en003.png";
     var dm = function (extra) {
       return Object.assign(newCard("mon"), { name: "Dark Magician", frame: "normal", attr: "dark", level: 7, atk: "2500", def: "2100",
@@ -1276,7 +1400,7 @@ details[open] summary { margin-bottom: 8px; }
     var monZone = role === "mon" || role === "emz";
     if (c.faceDown) return '<div class="ygo-card ygo-back' + (monZone && isMonster(c) ? " ygo-def" : "") + '">&nbsp;</div>';
     var def = monZone && isMonster(c) && c.frame !== "link" && c.pos === "def";
-    var pic = c.usePic && c.img && !def;
+    var pic = c.usePic && c.img;
     var cls = ["ygo-card", "ygo-" + c.frame];
     if (pic) cls.push("ygo-pic");
     if (def) cls.push("ygo-def");
@@ -1292,14 +1416,34 @@ details[open] summary { margin-bottom: 8px; }
     L.push("</div>");
     return L.join("\n");
   }
+  /* A pile's card list: a hover panel inside the Graveyard or Extra Deck pile, so pointing
+     at (or tapping) the pile shows the cards in it. A Graveyard lists its newest card first. */
+  function gyPanelHTML(list, count, owner, role) {
+    var L = ['<div class="ygo-spot ygo-hover ygo-gy">',
+      '<span class="ygo-spot-name">' + esc(owner) + "’s " + ROLE_NAME[role] + "</span>",
+      '<span class="ygo-spot-type">[' + count + (count === 1 ? " card" : " cards") +
+        (count > list.length ? ", " + list.length + " shown" : "") + (role === "gy" && list.length > 1 ? ", newest first" : "") + "]</span>",
+      '<span class="ygo-gy-list">'];
+    list.forEach(function (it) {
+      var name = esc(it.name || "?");
+      L.push('<span class="ygo-gy-card ygo-' + (it.frame || "normal") + (it.img ? "" : " ygo-gy-text") + '">' +
+        (it.img ? '<img src="' + esc(it.img) + '" alt="' + name + '" width="44">' : "") +
+        '<span class="ygo-gy-name">' + name + "</span></span>");
+    });
+    L.push("</span>", "</div>");
+    return L.join("\n");
+  }
   function cellHTML(s, r, c, preview, sel) {
     var role = LAYOUT[r][c], k = r + "-" + c, inner, z = s.zones[k];
     if (role === "blank") inner = "&nbsp;";
     else if (role === "phase") inner = '<span class="ygo-phase">' + esc(s.phase) + "</span>";
     else if (role === "turn") inner = '<span class="ygo-turn"><span class="ygo-turn-l">Turn</span> <span class="ygo-turn-n">' + s.turn + "</span></span>";
     else if (PILES.indexOf(role) >= 0) {
-      inner = z.count > 0
-        ? '<div class="ygo-card ' + (z.top === "back" ? "ygo-back" : "ygo-" + z.top) + ' ygo-pile"><span class="ygo-count">' + z.count + '</span> <span class="ygo-plabel">' + PILE_LABEL[role] + "</span></div>"
+      var list = LISTED.indexOf(role) >= 0 && z.list || [], count = Math.max(z.count, list.length);
+      var top = role === "gy" && list.length ? list[0].frame : z.top; /* the Extra Deck stays face-down */
+      inner = count > 0
+        ? '<div class="ygo-card ' + (top === "back" ? "ygo-back" : "ygo-" + top) + ' ygo-pile"><span class="ygo-count">' + count + '</span> <span class="ygo-plabel">' + PILE_LABEL[role] + "</span>" +
+          (list.length ? "\n" + gyPanelHTML(list, count, s[ownerOfRow(r)].name, role) + "\n" : "") + "</div>"
         : '<div class="ygo-zone">' + PILE_LABEL[role] + "</div>";
     } else {
       inner = z.kind === "card" ? cardHTML(z.card, role) : '<div class="ygo-zone">' + (role === "field" ? "Field" : "&nbsp;") + "</div>";
@@ -1319,7 +1463,12 @@ details[open] summary { margin-bottom: 8px; }
     ["opp", "me"].forEach(function (side) { s[side].cards.forEach(fn); });
   }
   function glowCard(s) { var g = null; eachCard(s, function (c) { if (c.glow && !g) g = c; }); return g; }
-  function anyHover(s) { var h = false; eachCard(s, function (c) { if (c.hover && !c.glow) h = true; }); return h; }
+  function anyHover(s) {
+    var h = false; eachCard(s, function (c) { if (c.hover && !c.glow) h = true; });
+    /* A pile's card list is a hover panel too. */
+    Object.keys(s.zones).forEach(function (k) { if (LISTED.indexOf(roleAt(k)) >= 0 && s.zones[k].list && s.zones[k].list.length) h = true; });
+    return h;
+  }
 
   function boardHTML(s, preview, sel) {
     var L = ['<div class="ygo-duel">', plateHTML(s.opp, "opp"), handHTML(s.opp, "opp", preview, sel), '<div class="ygo-scroll"><table class="ygo-field">'];
@@ -1440,6 +1589,10 @@ details[open] summary { margin-bottom: 8px; }
           var p = td.querySelector(".ygo-pile");
           s.zones[k] = p ? { count: clampInt(txt(p.querySelector(".ygo-count")), 0, 99), top: p.classList.contains("ygo-back") ? "back" : frameOf(p) || "normal" }
             : { count: 0, top: role === "gy" ? "normal" : "back" };
+          if (p && LISTED.indexOf(role) >= 0) s.zones[k].list = Array.prototype.map.call(p.querySelectorAll(".ygo-gy-card"), function (el) {
+            var im = el.querySelector("img");
+            return { name: txt(el.querySelector(".ygo-gy-name")) || (im ? im.getAttribute("alt") || "" : ""), frame: frameOf(el) || "normal", img: im ? im.getAttribute("src") || "" : "" };
+          });
           continue;
         }
         var card = td.querySelector(".ygo-card");
@@ -1522,15 +1675,97 @@ details[open] summary { margin-bottom: 8px; }
     return who + "’s " + ROLE_NAME[role] + (role === "st" || role === "mon" ? " " + c : "");
   }
 
+  /* ---------- Graveyard list editor ---------- */
+  var gyDraft = "";
+  function gyRowsHTML(z) {
+    var list = z.list || [], isGY = roleAt(sel) === "gy";
+    if (!list.length) return '<li class="hint">No cards listed yet. Add one below.</li>';
+    var label = {}; FRAMES.forEach(function (f) { label[f[0]] = f[1]; });
+    return list.map(function (it, i) {
+      return '<li class="gy-row">' +
+        (it.img ? '<img src="' + esc(it.img) + '" alt="">' : '<span class="gy-swatch ygo-' + esc(it.frame) + '"></span>') +
+        '<span class="gy-name">' + esc(it.name || "?") + "<small>" + esc(label[it.frame] || "") + (i === 0 && isGY ? " · on top" : "") + "</small></span>" +
+        '<span class="gy-btns">' +
+        '<button type="button" class="btn-ghost" data-gy="up" data-i="' + i + '" aria-label="Move ' + esc(it.name) + ' up"' + (i === 0 ? " disabled" : "") + ">↑</button>" +
+        '<button type="button" class="btn-ghost" data-gy="down" data-i="' + i + '" aria-label="Move ' + esc(it.name) + ' down"' + (i === list.length - 1 ? " disabled" : "") + ">↓</button>" +
+        '<button type="button" class="btn-ghost danger" data-gy="del" data-i="' + i + '" aria-label="Remove ' + esc(it.name) + '">✕</button>' +
+        "</span></li>";
+    }).join("");
+  }
+  /* The selected Graveyard or Extra Deck, when one is selected. */
+  function gyZone() { var t = target(); return t && !t.hand && LISTED.indexOf(t.role) >= 0 ? t.z : null; }
+  function refreshGY(z) {
+    render();
+    if (gyZone() !== z) return;
+    var ul = $("#gy-list"); if (ul) ul.innerHTML = gyRowsHTML(z);
+    var n = $("#f-count"); if (n) { n.min = (z.list || []).length; n.value = Math.max(z.count, (z.list || []).length); }
+  }
+  /* Keeps the pile's number in step with the list. While every card is listed, the number
+     follows the list. If the pile holds more than is listed, a newly added card is taken to
+     be one of the unlisted ones, so the number only grows once the list catches up.
+     before = the list's length before the change. */
+  function gyCount(z, before) {
+    var n = z.list.length;
+    if (before == null) before = n - 1;
+    z.count = z.count <= before ? n : Math.max(z.count, n);
+  }
+  function setGYMsg(z, msg) { if (gyZone() !== z) return; lookupMsg = msg; var out = $("#lookup-out"); if (out) out.innerHTML = msg; }
+  /* Puts a card on top of the selected Graveyard, then fetches its picture. */
+  function addToGY(name, frame) {
+    var z = gyZone(); if (!z || !name) return;
+    if (!z.list) z.list = [];
+    var it = { name: name, frame: frame || "normal", img: "" };
+    z.list.unshift(it);
+    gyCount(z);
+    gyDraft = "";
+    var hadTop = !!$("#f-top");
+    lookupMsg = '<p class="hint ok">✓ Added ' + esc(name) + ". Getting its picture from Cardsrealm…</p>";
+    if (hadTop) renderEditor(); else { setGYMsg(z, lookupMsg); $("#gy-name").value = ""; }
+    refreshGY(z);
+    if ($("#gy-name")) $("#gy-name").focus();
+    var added = "✓ Added " + esc(name) + ".";
+    getPicture(name).then(function (src) {
+      if (src) it.img = src;
+      refreshGY(z);
+      setGYMsg(z, src ? '<p class="hint ok">' + added + " Picture from Cardsrealm.</p>" : '<p class="hint">' + added + " Cardsrealm has no picture of this card, so it shows as a coloured box.</p>");
+    }, function () {
+      setTimeout(function () {
+        setGYMsg(z, '<p class="hint bad">' + added + " Couldn’t get its picture from Cardsrealm, so it shows as a coloured box. " +
+          (blocked.connect ? BLOCKED_TIP : "Remove it and add it again in a moment to retry.") + "</p>");
+      }, 150);
+    });
+  }
+  function moveGY(act, i) {
+    var z = gyZone(); if (!z || !z.list || !z.list[i]) return;
+    var L = z.list;
+    if (act === "del") { L.splice(i, 1); gyCount(z, L.length + 1); lookupMsg = ""; }
+    else { var j = i + (act === "up" ? -1 : 1); if (j < 0 || j >= L.length) return; var m = L[i]; L[i] = L[j]; L[j] = m; }
+    if (!L.length) { if (roleAt(sel) === "gy") z.top = "normal"; renderEditor(); render(); return; } /* bring back the "Card on top" menu */
+    refreshGY(z); setGYMsg(z, lookupMsg);
+    var b = document.querySelector('[data-gy="' + act + '"][data-i="' + Math.max(0, Math.min(L.length - 1, act === "up" ? i - 1 : act === "down" ? i + 1 : i)) + '"]');
+    if (b && !b.disabled) b.focus();
+  }
+
   function editorHTML() {
     var t = target();
     if (!t) return '<p class="empty-note">Click any zone on the board, or any card in a hand, to put a card there or change it.</p>';
     var role = t.role, z = t.z, h = '<p class="zone-title">' + esc(zoneTitle(sel)) + "</p>";
     if (!t.hand && PILES.indexOf(role) >= 0) {
-      h += '<div class="field"><label for="f-count">Cards in this pile</label><input type="number" id="f-count" min="0" max="99" data-f="count" value="' + z.count + '"></div>';
-      if (role === "gy") h += '<div class="field"><label for="f-top">Card on top</label><select id="f-top" data-f="top" data-struct>' +
+      var listed = LISTED.indexOf(role) >= 0 && z.list ? z.list.length : 0;
+      h += '<div class="field"><label for="f-count">Cards in this pile</label><input type="number" id="f-count" min="' + listed + '" max="99" data-f="count" value="' + Math.max(z.count, listed) + '"></div>';
+      if (LISTED.indexOf(role) < 0) return h + '<p class="hint">At 0 the zone shows as empty.</p>';
+      var gy = role === "gy";
+      if (gy && !listed) h += '<div class="field"><label for="f-top">Card on top</label><select id="f-top" data-f="top" data-struct>' +
         opt(FRAMES.filter(function (f) { return f[0] !== "token"; }), z.top) + "</select></div>";
-      return h + '<p class="hint">At 0 the zone shows as empty.</p>';
+      h += '<div class="field"><span class="legend">' + (gy ? "Cards in the Graveyard (newest first)" : "Cards in the Extra Deck") + "</span>" +
+        '<ul class="gy-list" id="gy-list">' + gyRowsHTML(z) + "</ul>" +
+        '<label for="gy-name">Add a card</label><div class="inline"><input type="text" id="gy-name" autocomplete="off" placeholder="Card name" value="' + esc(gyDraft) + '">' +
+        '<button type="button" class="btn" id="lookup-btn">Look up</button></div>' +
+        '<div class="lookup-out" id="lookup-out" aria-live="polite">' + lookupMsg + "</div>" +
+        '<p class="hint">' + (gy
+          ? "Readers see this list, with each card’s picture, when they point at or tap the Graveyard. A new card goes on top. You don’t have to list every card: the pile can hold more than you list."
+          : "Readers see this list, with each card’s picture, when they point at or tap the Extra Deck. List only the cards readers should know about: the rest stay secret, and the pile still shows the full number.") + "</p></div>";
+      return h;
     }
     if (!t.hand) {
       h += '<div class="field"><span class="legend">What’s here</span>' + seg("f-kind", "kind", [["empty", "Nothing"], ["card", "A card"]], z.kind) + "</div>";
@@ -1540,7 +1775,7 @@ details[open] summary { margin-bottom: 8px; }
     h += '<div class="field"><label for="f-name">Card name</label><div class="inline"><input type="text" id="f-name" data-f="name" autocomplete="off" value="' + esc(c.name) + '">' +
       '<button type="button" class="btn" id="lookup-btn">Look up</button></div>' +
       '<div class="lookup-out" id="lookup-out" aria-live="polite">' + lookupMsg + "</div>" +
-      '<p class="hint">Look up fills in everything except the picture. You can change any detail after.</p></div>';
+      '<p class="hint">Look up fills in the card’s details and its picture. You can change any of it after.</p></div>';
     h += '<div class="checks">' + (t.hand
       ? check("f-revealed", "revealed", c.revealed, "Face-up (revealed): readers can see this card") +
         (c.revealed ? "" : '<p class="hint">Readers only see a card back. Anything you fill in below stays hidden until you reveal it.</p>')
@@ -1563,10 +1798,10 @@ details[open] summary { margin-bottom: 8px; }
     h += '<div class="field"><label for="f-img">Picture link</label><div class="pic-row"><div style="display:grid;gap:4px;min-width:0">' +
       '<input type="url" id="f-img" data-f="img" placeholder="https://i.imgur.com/abc123.png" value="' + esc(c.img) + '">' +
       '<p class="hint" id="img-status"></p></div><img id="img-thumb" alt="" hidden></div>' +
-      '<p class="hint">Upload the card picture to an image host and paste its direct link (it usually ends in .png or .jpg).</p></div>';
+      '<p class="hint">Look up fills this in from Cardsrealm. To use a different picture, paste its direct link (it usually ends in .png or .jpg).</p></div>';
     var noImg = !c.img;
     h += '<div class="checks">' +
-      check("f-usepic", "usePic", c.usePic, (t.hand ? "Show the picture in the hand" : "Show the picture on the field") + " instead of the drawn card" + (c.pos === "def" && mon && monZone ? " (only in Attack Position)" : ""), noImg) +
+      check("f-usepic", "usePic", c.usePic, (t.hand ? "Show the picture in the hand" : "Show the picture on the field") + " instead of the drawn card", noImg) +
       check("f-pop", "pop", c.pop, "Pop up the picture when a reader points at the card", noImg) +
       check("f-hover", "hover", c.hover, "Swap the info panel to this card when pointed at") +
       check("f-glow", "glow", c.glow, "Highlight this card (golden glow; the info panel shows it)") + "</div>";
@@ -1641,10 +1876,14 @@ details[open] summary { margin-bottom: 8px; }
       sel = null; lookupMsg = ""; fillSideInputs(); render(); renderEditor();
       return;
     }
+    if (e.target.id === "gy-add-raw") { addToGY(e.target.dataset.name, "normal"); return; }
+    var gb = e.target.closest("[data-gy]");
+    if (gb) { moveGY(gb.dataset.gy, +gb.dataset.i); return; }
     var res = e.target.closest(".result");
     if (res) applyResult(lastResults[+res.dataset.i]);
   });
-  editor.addEventListener("keydown", function (e) { if (e.key === "Enter" && e.target.id === "f-name") { e.preventDefault(); doLookup(); } });
+  editor.addEventListener("keydown", function (e) { if (e.key === "Enter" && (e.target.id === "f-name" || e.target.id === "gy-name")) { e.preventDefault(); doLookup(); } });
+  editor.addEventListener("input", function (e) { if (e.target.id === "gy-name") gyDraft = e.target.value; });
 
   /* ---------- Picture link checks ---------- */
   function linkHint(url) {
@@ -1697,14 +1936,20 @@ details[open] summary { margin-bottom: 8px; }
 
   /* ---------- Card lookup (YGOPRODeck) ---------- */
   function doLookup() {
-    var q = ($("#f-name").value || "").trim(), out = $("#lookup-out");
+    var gy = !!gyZone(), inp = $(gy ? "#gy-name" : "#f-name");
+    var q = (inp.value || "").trim(), out = $("#lookup-out");
     if (q.length < 2) { lookupMsg = '<p class="hint bad">Type at least 2 letters of the card’s name first.</p>'; out.innerHTML = lookupMsg; return; }
     out.innerHTML = '<p class="hint">Searching…</p>';
+    /* Without the database, a Graveyard card can still go in by the name as typed. */
+    var addRaw = gy ? ' <button type="button" class="btn-ghost" id="gy-add-raw" data-name="' + esc(q) + '">Add “' + esc(q) + '” anyway</button>' : "";
     fetch("https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=" + encodeURIComponent(q) + "&num=10&offset=0")
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (res) {
         var data = res.ok && res.j && res.j.data || [];
-        if (!data.length) { lookupMsg = '<p class="hint bad">No card found matching “' + esc(q) + '”. Check the spelling, or fill in the details yourself.</p>'; }
+        if (!data.length) {
+          lookupMsg = '<p class="hint bad">No card found matching “' + esc(q) + '”. Check the spelling' +
+            (gy ? ", or add it as typed.</p>" + addRaw : ", or fill in the details yourself.</p>");
+        }
         else {
           data.sort(function (a, b) { return (b.name.toLowerCase() === q.toLowerCase()) - (a.name.toLowerCase() === q.toLowerCase()); });
           lastResults = data;
@@ -1721,16 +1966,21 @@ details[open] summary { margin-bottom: 8px; }
             ? "Look up can’t reach the card database from here. " + BLOCKED_TIP
             : navigator.onLine === false
               ? "You seem to be offline. Reconnect and try again, or fill in the details yourself."
-              : "Couldn’t reach the card database. Try again in a moment, or fill in the details yourself. If it keeps failing, a browser extension (like an ad blocker) may be blocking db.ygoprodeck.com.") + "</p>";
+              : "Couldn’t reach the card database. Try again in a moment, or fill in the details yourself. If it keeps failing, a browser extension (like an ad blocker) may be blocking db.ygoprodeck.com.") + "</p>" + addRaw;
           if ($("#lookup-out")) $("#lookup-out").innerHTML = lookupMsg;
         }, 150);
       });
   }
-  function applyResult(d) {
-    var c = cur(); if (!c || !d) return;
+  function frameOfResult(d) {
     var ft = String(d.frameType || "effect").replace("_pendulum", "");
     if (ft === "skill") ft = "effect";
-    if (FRAME_IDS.indexOf(ft) < 0) ft = "effect";
+    return FRAME_IDS.indexOf(ft) < 0 ? "effect" : ft;
+  }
+  function applyResult(d) {
+    if (d && gyZone()) { addToGY(d.name, frameOfResult(d)); return; }
+    var c = cur(); if (!c || !d) return;
+    c.img = ""; /* the old picture may belong to another card; fetchPicture fills in the new one */
+    var ft = frameOfResult(d);
     c.name = d.name; c.frame = ft;
     if (isMonster(c)) {
       c.attr = String(d.attribute || "dark").toLowerCase();
@@ -1746,10 +1996,54 @@ details[open] summary { margin-bottom: 8px; }
     var text = String(d.desc || "").replace(/\r?\n/g, " ");
     if (ft === "normal") text = text.replace(/^''|''$/g, "");
     c.text = text;
-    var img = d.card_images && d.card_images[0] && d.card_images[0].image_url;
-    lookupMsg = '<p class="hint ok">✓ Filled in ' + esc(d.name) + "." +
-      (img ? ' For its picture, <a href="' + esc(img) + '" target="_blank" rel="noopener">open the card picture</a>, save it, upload it to your image host, and paste your link below.' : "") + "</p>";
+    lookupMsg = '<p class="hint ok">✓ Filled in ' + esc(d.name) + ". Getting its picture from Cardsrealm…</p>";
     render(); renderEditor();
+    fetchPicture(c, d.name);
+  }
+
+  /* ---------- Card pictures (Cardsrealm) ----------
+     Cardsrealm's free API gives each card's picture as a direct link on its image server,
+     which AO3 can show as is. Its links name a set and print code, so they can't be
+     worked out from the card name: we have to ask. */
+  var CR_API = "https://cardsrealm.com/en-us/api/getCardsInfo?game_id=2&cards=";
+  /* Resolves to the card's picture link, or "" when Cardsrealm has none; rejects when
+     Cardsrealm can't be reached. */
+  function getPicture(name) {
+    return fetch(CR_API + encodeURIComponent(name))
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (list) {
+        list = Array.isArray(list) ? list : [];
+        var lower = name.toLowerCase();
+        var hit = list.filter(function (x) { return String(x.name_ing || "").toLowerCase() === lower; })[0] || list[0];
+        return hit ? String(hit.image_of_card || "").replace(/^http:/i, "https:") : "";
+      });
+  }
+  function fetchPicture(c, name) {
+    function done(msg, src) {
+      if (c.name !== name) return; /* the writer renamed or re-looked-up the card meanwhile */
+      if (src) c.img = src;
+      render();
+      if (cur() !== c) return;
+      lookupMsg = msg;
+      var out = $("#lookup-out"), box = $("#f-img");
+      if (out) out.innerHTML = msg;
+      if (box) box.value = c.img;
+      ["#f-usepic", "#f-pop"].forEach(function (id) { var b = $(id); if (b) b.disabled = !c.img; });
+      checkPicture();
+    }
+    var filled = "✓ Filled in " + esc(name) + ".";
+    getPicture(name)
+      .then(function (src) {
+        if (src) done('<p class="hint ok">' + filled + " Picture from Cardsrealm.</p>", src);
+        else done('<p class="hint">' + filled + " Cardsrealm has no picture of this card, so paste your own link below if you want one.</p>");
+      })
+      .catch(function () {
+        setTimeout(function () {
+          done('<p class="hint bad">' + filled + " Couldn’t get its picture from Cardsrealm. " + (blocked.connect
+            ? BLOCKED_TIP
+            : "Press Look up again in a moment, or paste your own picture link below. If it keeps failing, a browser extension (like an ad blocker) may be blocking cardsrealm.com.") + "</p>");
+        }, 150);
+      });
   }
 
   /* ---------- Side panels ---------- */
@@ -1794,7 +2088,7 @@ details[open] summary { margin-bottom: 8px; }
       var role = roleAt(k);
       if (role === "phase" || role === "turn") { $("#" + (role === "phase" ? "phase" : "turn")).focus(); return; }
     }
-    sel = k; lookupMsg = "";
+    sel = k; lookupMsg = ""; gyDraft = "";
     render(); renderEditor();
     var again = preview.querySelector(isHandKey(k) ? '[data-h="' + k + '"]' : 'td[data-z="' + k + '"]');
     if (again) again.focus({ preventScroll: true });

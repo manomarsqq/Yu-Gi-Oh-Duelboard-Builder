@@ -355,13 +355,26 @@
    6. DEFENSE POSITION AND FACE-DOWN CARDS
    ===================================================================== */
 
-/* Add ygo-def to a card to lay it sideways (Defense Position):
-   the box becomes wide and short, the picture moves to the left half,
-   and the stats move to the right half. DEF turns bright, ATK fades. */
-.ygo-def { max-width: 9.6em; height: 6.6em; }                 /* width and height swapped */
-.ygo-def .ygo-cname { height: 1.1em; white-space: nowrap; }   /* name on one line only */
-.ygo-def .ygo-art { float: left; width: 45%; height: 1.9em; line-height: 1.9em; }  /* "float: left" = sit on the left, let the next part sit beside it */
-.ygo-def .ygo-stats { margin: 0.6em 0 0 50%; }                /* start halfway across, beside the picture */
+/* Add ygo-def to a card to lay it sideways (Defense Position).
+   The box is as wide as its zone, and its height comes from the bottom
+   padding: a percentage of the zone's width, so the box always has a
+   sideways card's shape (68.75% = 6.6 ÷ 9.6), even in the narrow zones
+   of a phone screen. Inside, top to bottom: the name on one line, DEF
+   (bright), ATK (faded), then the picture box. A small card cuts off its
+   bottom first, so the parts that matter most come first.
+   "display: flex" is what lets the parts be put in a new order. */
+.ygo-def {
+  display: flex;
+  flex-direction: column;
+  max-width: none;                  /* as wide as the zone */
+  height: 0;                        /* no height of its own... */
+  padding: 0.2em 0.2em 68.75%;      /* ...it all comes from this bottom padding */
+}
+.ygo-def > p { display: contents; } /* in case AO3 wraps the parts in a paragraph */
+.ygo-def .ygo-cname, .ygo-def .ygo-stats, .ygo-def .ygo-art { flex-shrink: 0; }  /* keep their size although the box has no height */
+.ygo-def .ygo-cname { height: 1.1em; white-space: nowrap; text-overflow: ellipsis; }  /* name on one line; "…" if too long */
+.ygo-def .ygo-stats { order: 1; display: flex; flex-direction: column-reverse; margin-top: 0.15em; }  /* right under the name, DEF above ATK */
+.ygo-def .ygo-art { order: 2; height: 1.3em; margin: 0.1em 0 0; font-size: 1.6em; line-height: 1.3em; }  /* last, so it's the part a small card cuts off */
 .ygo-def .ygo-a { color: rgba(255, 255, 255, 0.45); }
 .ygo-def .ygo-d { color: #9fd0ff; }
 
@@ -379,8 +392,9 @@
   background: radial-gradient(circle, #000 0, #000 16%, #2a1406 24%, #6e3b15 44%, #3a1c08 58%, #8a5222 100%);
   border: 0.3em solid #7a4a1f;
 }
-/* Face-down AND sideways = a set monster in Defense Position. */
-.ygo-back.ygo-def { height: 6.5em; }
+/* Face-down AND sideways = a set monster in Defense Position: just the
+   card back, in the same sideways shape. */
+.ygo-back.ygo-def { height: 0; padding: 0 0 68.75%; }
 /* Face-down in hand: same back, thinner border to suit the tiny size. */
 .ygo-mini.ygo-back { height: 2.2em; border-width: 0.15em; }
 
@@ -637,6 +651,10 @@
 .ygo-card:hover .ygo-pop { display: block; }
 /* The picture fills the pop-up's width; height follows automatically. */
 .ygo-pop img { display: block; width: 100%; height: auto; }
+/* Pop-ups never cover words. The info panels (sections 11 and 14) are
+   drawn above them, so a picture that runs into a panel slides underneath
+   it. "position: relative" is what lets z-index work on the panel. */
+.ygo-spot { position: relative; z-index: 11; }
 
 /* B) A real card picture on the field. The card box loses its frame and
    takes the picture's own height, and the ATK/DEF strip is pulled up
@@ -646,6 +664,16 @@
 .ygo-pic { height: auto; padding: 0; background: #111; }
 .ygo-pic img { display: block; width: 100%; height: auto; }
 .ygo-pic .ygo-stats { position: relative; margin-top: -2.6em; border-radius: 0; background: rgba(0, 0, 0, 0.8); }
+/* A real card picture in Defense Position (ygo-pic and ygo-def together):
+   the picture itself is turned on its side, like a set monster in the
+   game, with only the DEF strip over its bottom edge. The picture is
+   made as wide as the sideways box is tall, moved so its centre sits on
+   the box's centre, then turned a quarter-turn to the left.
+   ("> img" = only the card's own picture, not the pop-up's.) */
+.ygo-def.ygo-pic { display: block; height: 0; padding: 0 0 68.75%; }
+.ygo-def.ygo-pic > img { width: 68.75%; margin: -15.625% 0 0 15.625%; transform: rotate(270deg); }
+.ygo-def.ygo-pic .ygo-stats { display: block; margin-top: -15.625%; top: -1.15em; }  /* pulled up from under the picture */
+.ygo-def.ygo-pic .ygo-a { display: none; }
 
 /* C) The picture in the info panel sits on the left; the text flows on its right. */
 .ygo-spot { overflow: hidden; }     /* makes the panel tall enough to fit the picture */
@@ -683,7 +711,7 @@
   bottom: 0.7em;                    /*    plus the default panel's 0.2em bottom margin */
   margin: 0;
   min-height: 13em;                 /* a bit taller than the default panel, so none of it peeks out above */
-  z-index: 9;                       /* above the default panel (pop-ups are 10, so they stay on top) */
+  z-index: 12;                      /* above the default panel (11) and the pop-ups (10) */
   font-size: 1.54em;                /* the field shrinks text to 0.65em; this undoes it (1 ÷ 0.65) */
   border-color: #ffd84a;            /* gold edge, so it's clear this is the pointed-at card */
 }
@@ -759,5 +787,68 @@
 /* The field shrinks text to 0.65em and the pop-up is sized for that, so
    match it here; and drop the pop-up just below the hand. */
 .ygo-hand .ygo-pop { font-size: 0.65em; margin-top: 0.8em; }
+/* Your own hand sits just above the info panel, so its pop-ups open
+   UPWARD, over your side of the field, instead of down over the panel.
+   ".ygo-scroll ~ .ygo-hand" means "a hand that comes after the field".
+   The lift is the card's height (6.8em) + the picture's (30.2em) + a gap.
+   On a phone the picture is smaller (max-width 45% in section 13), so it
+   just floats a little higher. */
+.ygo-scroll ~ .ygo-hand .ygo-pop { margin-top: -37.6em; }
 /* Hands aren't shrunk, so the info panel needs no size correction. */
 .ygo-hand .ygo-hover { font-size: 1em; }
+
+/* =====================================================================
+   16. GRAVEYARD AND EXTRA DECK LISTS (optional)
+   Lets readers see the cards in a Graveyard or an Extra Deck. Pointing
+   at (or tapping) the pile shows its cards over the info panel, the same
+   way a hover info panel does (section 14). Put this inside the pile,
+   after its "GY" or "Extra" label (for a Graveyard, newest card first):
+     <div class="ygo-spot ygo-hover ygo-gy">
+     <span class="ygo-spot-name">Yugi’s Graveyard</span>
+     <span class="ygo-spot-type">[2 cards, newest first]</span>
+     <span class="ygo-gy-list">
+     <span class="ygo-gy-card ygo-spell"><img src="LINK" alt="Pot of Greed" width="44"><span class="ygo-gy-name">Pot of Greed</span></span>
+     <span class="ygo-gy-card ygo-trap ygo-gy-text"><span class="ygo-gy-name">Mirror Force</span></span>
+     </span>
+     </div>
+   Each card is a small tile in its frame colour (ygo-spell, ygo-trap...):
+   its picture with the name underneath or, with ygo-gy-text and no
+   picture, just its name. An Extra Deck list works the same way: change
+   the title to "Yugi’s Extra Deck" and list the cards readers know about.
+   ===================================================================== */
+/* A big list scrolls inside the panel instead of growing past the
+   top of the board and over the story. */
+.ygo-gy { max-height: 36em; overflow: auto; }
+/* AO3 wraps the cards in a paragraph; this keeps them in rows. */
+.ygo-gy-list p { display: inline; }
+.ygo-gy-list { display: block; margin-top: 0.45em; }
+.ygo-gy-card {
+  display: inline-block;            /* side by side, wrapping onto a new row when full */
+  width: 4.6em;
+  margin: 0 0.3em 0.4em 0;
+  padding: 0.15em;
+  vertical-align: top;
+  border: 1px solid #1a1a1a;
+  border-radius: 0.2em;
+  box-shadow: 0 0.1em 0.25em rgba(0, 0, 0, 0.5);
+}
+.ygo-gy-card img { display: block; width: 100%; height: auto; }
+/* The name under the picture: small, three lines at most. */
+.ygo-gy-name {
+  display: block;
+  height: 3.45em;
+  overflow: hidden;
+  margin-top: 0.15em;
+  padding: 0 0.15em;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 0.1em;
+  color: #1a1a1a;
+  font-size: 0.62em;
+  font-style: normal;
+  font-weight: bold;
+  line-height: 1.15;
+}
+/* On dark frames (Xyz, Link) the name strip goes dark, with light text. */
+.ygo-gy-card.ygo-xyz .ygo-gy-name, .ygo-gy-card.ygo-link .ygo-gy-name { background: rgba(0, 0, 0, 0.4); color: #f1f1f1; }
+/* No picture: the name fills a tile as tall as a picture tile. */
+.ygo-gy-text .ygo-gy-name { height: 14.3em; margin-top: 0; }
