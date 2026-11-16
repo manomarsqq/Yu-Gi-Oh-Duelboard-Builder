@@ -23,6 +23,8 @@
   Real card pictures: ygo-pic (card on the field), ygo-pop (pop-up),
               ygo-spot-img (info panel). Examples in Yugi's monster row
               and the info panel below; details in section 13 of the CSS.
+  Graveyard/Extra Deck list: ygo-gy inside a pile (see Yami Yugi's GY;
+              details in section 16 of the CSS).
   Hover info panel: ygo-spot ygo-hover inside a card (see Eternal Soul
               and Monster Reborn; details in section 14 of the CSS).
   The picture links below (https://example.com/...) are placeholders:
@@ -130,8 +132,21 @@
 </div></td>
 <td><div class="ygo-zone">&nbsp;</div></td>
 <td><div class="ygo-zone">&nbsp;</div></td>
-<!-- Your GY: top card is a Spell, so ygo-spell. -->
-<td><div class="ygo-card ygo-spell ygo-pile"><span class="ygo-count">1</span> <span class="ygo-plabel">GY</span></div></td>
+<!-- Your GY: top card is a Spell, so ygo-spell.
+     The GRAVEYARD LIST inside it (ygo-gy) shows every card in the GY when
+     the reader points at or taps the pile, newest first. One ygo-gy-card
+     line per card, with its frame colour. For a card with no picture,
+     leave out the <img> and add ygo-gy-text, e.g.
+     <span class="ygo-gy-card ygo-trap ygo-gy-text"><span class="ygo-gy-name">Mirror Force</span></span> -->
+<td><div class="ygo-card ygo-spell ygo-pile"><span class="ygo-count">1</span> <span class="ygo-plabel">GY</span>
+<div class="ygo-spot ygo-hover ygo-gy">
+<span class="ygo-spot-name">Yami Yugi’s Graveyard</span>
+<span class="ygo-spot-type">[1 card]</span>
+<span class="ygo-gy-list">
+<span class="ygo-gy-card ygo-spell"><img src="https://example.com/pot-of-greed.png" alt="Pot of Greed" width="44"><span class="ygo-gy-name">Pot of Greed</span></span>
+</span>
+</div>
+</div></td>
 </tr>
 <!-- ROW 5, your back row: Extra Deck | 5 Spell/Trap zones | Deck -->
 <tr class="ygo-me">

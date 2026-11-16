@@ -7,8 +7,9 @@ Make Yu-Gi-Oh! duel boards for your AO3 fic by clicking and typing — no code t
 ## What it does
 
 - Shows the whole field: both duelists' LP, hands, Deck/Extra Deck/Graveyard piles, Monster, Spell & Trap, Field and Extra Monster Zones, phase and turn.
-- **Look up** fills in a card's type, attribute, level, ATK/DEF and text by name, from [YGOPRODeck](https://ygoprodeck.com/api-guide/)'s free card database.
+- **Look up** fills in a card's type, attribute, level, ATK/DEF and text by name, from [YGOPRODeck](https://ygoprodeck.com/api-guide/)'s free card database, and its picture from [Cardsrealm](https://cardsrealm.com/en-us/api).
 - Cards in hand can be kept secret or **revealed** face-up.
+- **Graveyard and Extra Deck lists:** readers point at or tap a Graveyard or Extra Deck to see the cards in it, with pictures. A Graveyard lists its newest card first; for an Extra Deck you list only the cards readers should know about.
 - Real card pictures: on the field, as a pop-up when a reader points at a card, or in the info panel. The builder checks each picture link and explains what's wrong with a bad one.
 - Pointing at a card can swap the info panel to that card's details.
 - **Copy board code** gives you HTML to paste into your chapter (in AO3's HTML mode). Paste a board back in to keep editing it next turn.
@@ -28,4 +29,6 @@ Make Yu-Gi-Oh! duel boards for your AO3 fic by clicking and typing — no code t
 
 ## Pictures
 
-AO3 can't store images, so upload card pictures to an image host and paste the **direct** link (it usually ends in `.png` or `.jpg`). YGOPRODeck asks people not to link its card pictures directly, so save them and re-host them instead.
+AO3 can't store images, so boards link to pictures hosted elsewhere. **Look up** fills in the card's picture link from Cardsrealm's image server for you.
+
+To use a different picture, upload it to an image host and paste the **direct** link (it usually ends in `.png` or `.jpg`). YGOPRODeck asks people not to link its card pictures directly, so save those and re-host them instead.
