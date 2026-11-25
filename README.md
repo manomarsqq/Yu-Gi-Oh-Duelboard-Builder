@@ -9,6 +9,8 @@ Make Yu-Gi-Oh! duel boards for your AO3 fic by clicking and typing — no code t
 - Shows the whole field: both duelists' LP, hands, Deck/Extra Deck/Graveyard piles, Monster, Spell & Trap, Field and Extra Monster Zones, phase and turn.
 - **Look up** fills in a card's type, attribute, level, ATK/DEF and text by name, from [YGOPRODeck](https://ygoprodeck.com/api-guide/)'s free card database, and its picture from [Cardsrealm](https://cardsrealm.com/en-us/api).
 - Cards in hand can be kept secret or **revealed** face-up.
+- **Tag Duels** (two against two): each team can share one field and Graveyard, with each partner's own Deck and Extra Deck beside their hand, or every duelist can have their own field. Each team can share its Life Points, or every duelist can have their own. The board marks whose turn it is.
+- **All against all:** four duelists, each with their own field, Life Points and colour.
 - **Graveyard and Extra Deck lists:** readers point at or tap a Graveyard or Extra Deck to see the cards in it, with pictures. A Graveyard lists its newest card first; for an Extra Deck you list only the cards readers should know about.
 - Real card pictures: on the field, as a pop-up when a reader points at a card, or in the info panel. The builder checks each picture link and explains what's wrong with a bad one.
 - Pointing at a card can swap the info panel to that card's details.

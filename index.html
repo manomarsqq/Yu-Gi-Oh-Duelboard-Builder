@@ -245,6 +245,9 @@ input:disabled + span { opacity: 0.5; }
 #workskin [data-h] { cursor: pointer; }
 #workskin .ygo-mini.is-sel { outline: 3px solid var(--sel); outline-offset: 2px; }
 #workskin [data-h]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#workskin .ygo-mini-pile[data-z] { cursor: pointer; }
+#workskin .ygo-mini-pile[data-z]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
 
 /* ---------- Code output ---------- */
 .code-panel ol { margin: 0 0 12px; padding-left: 1.3em; }
@@ -1119,6 +1122,67 @@ details[open] summary { margin-bottom: 8px; }
 .ygo-gy-card.ygo-xyz .ygo-gy-name, .ygo-gy-card.ygo-link .ygo-gy-name { background: rgba(0, 0, 0, 0.4); color: #f1f1f1; }
 /* No picture: the name fills a tile as tall as a picture tile. */
 .ygo-gy-text .ygo-gy-name { height: 14.3em; margin-top: 0; }
+
+/* =====================================================================
+   17. TAG DUELS (optional)
+   Two against two. Add ygo-tag to the board, plus ygo-tag-shared (each
+   team shares one field and Graveyard) or ygo-tag-split (every duelist
+   has their own field), and ygo-tag-team if each team shares its Life
+   Points. Each partner sits on the outside of their team:
+   - A partner's hand and plate get ygo-p2 next to their team's class:
+       <div class="ygo-hand ygo-hand-opp ygo-p2">
+   - A team that shares its Life Points has one plate with both names:
+       <span class="ygo-pname"><span class="ygo-pn">Pegasus</span> &amp; <span class="ygo-pn">Keith</span></span>
+   - Each hand label names its duelist (ygo-hname). ygo-hand-act turns
+     it gold for the duelist whose turn it is:
+       <span class="ygo-hand-label ygo-hand-act">▶ <span class="ygo-hname">Yugi</span> · Hand: 5</span>
+   - Shared field: a partner's own Deck and Extra Deck are small piles
+     at the end of their hand. An Extra Deck list (section 16) works
+     inside one, as on the field:
+       <div class="ygo-mini ygo-back ygo-mini-pile ygo-mpile-deck"><span class="ygo-count">30</span> <span class="ygo-plabel">Deck</span></div>
+   - Separate fields: a partner's half of the field is a second field
+     table with ygo-field-p2, holding just their two rows.
+   ===================================================================== */
+/* Section 15 opens pop-ups upward in any hand that comes after a field.
+   With separate fields the opponent's hand comes after their partner's
+   field, so the opponents' hands keep opening downward. */
+.ygo-duel .ygo-hand-opp .ygo-pop { margin-top: 0.8em; }
+/* A partner's small piles: the size of a face-up hand card, with the
+   same stacked-card shadow as the piles on the field. */
+.ygo-mini.ygo-mini-pile {
+  width: 3em;
+  height: 4.4em;
+  margin: 0 0.15em 0.2em;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0.1em 0.12em 0 #2a1a0e, 0.2em 0.24em 0 #1d120a;
+}
+.ygo-mini-pile:hover { outline: 2px solid #fff36b; }
+.ygo-mini-pile .ygo-count { margin-top: 0.5em; font-size: 1.5em; }
+.ygo-mini-pile .ygo-plabel { margin-top: 0.15em; font-size: 0.55em; }
+/* The hand label of the duelist whose turn it is: gold, with dark text. */
+.ygo-hand-act { background: #ffd84a; color: #3a2400; }
+/* A name stays on one line in a two-name plate. */
+.ygo-pn { white-space: nowrap; }
+
+/* =====================================================================
+   18. ALL AGAINST ALL (optional)
+   Four duelists, each on their own. The board is laid out like a Tag
+   Duel with separate fields (section 17), with ygo-ffa on the board in
+   place of the ygo-tag classes. Each duelist gets a colour of their own,
+   top to bottom: purple, red, blue, gold. The red and blue duelists use
+   the usual classes; the outer two add a colour class:
+   - on their plate:      <div class="ygo-plate ygo-plate-opp ygo-p2 ygo-plate-purple">
+   - on their field rows: <tr class="ygo-opp ygo-purple">
+   - on their Extra Monster Zone card, in place of ygo-mine / ygo-theirs:
+     ygo-ring-purple or ygo-ring-gold
+   ===================================================================== */
+.ygo-plate-purple { background: #3a1f4d; border-color: #b06ad9; }
+.ygo-plate-gold { background: #4a3810; border-color: #e0b040; }
+.ygo-purple .ygo-zone { border-color: #bb8ae6; background: rgba(225, 195, 255, 0.18); }
+.ygo-gold .ygo-zone { border-color: #e8c25a; background: rgba(255, 232, 170, 0.18); }
+.ygo-ring-purple { box-shadow: 0 0 0 0.2em #b06ad9, 0 0.15em 0.3em rgba(0, 0, 0, 0.5); }
+.ygo-ring-gold { box-shadow: 0 0 0 0.2em #e0b040, 0 0.15em 0.3em rgba(0, 0, 0, 0.5); }
 </script>
 
 <div class="page">
@@ -1161,7 +1225,23 @@ details[open] summary { margin-bottom: 8px; }
 
       <section class="panel" aria-labelledby="duel-h">
         <h3 id="duel-h">Duelists and turn</h3>
+        <div class="field"><label for="mode">Kind of duel</label>
+          <select id="mode" data-p="mode">
+            <option value="single">One against one</option>
+            <option value="shared">Tag Duel: each team shares one field</option>
+            <option value="split">Tag Duel: every duelist has their own field</option>
+            <option value="ffa">All against all: four duelists, each on their own</option>
+          </select>
+        </div>
+        <div class="tag-only">
+          <label class="check team-only"><input type="checkbox" id="shared-life" data-p="teamLP"><span>Each team shares one set of Life Points</span></label>
+          <p class="hint" id="tag-note" style="margin-bottom:10px"></p>
+        </div>
         <div class="row3">
+          <div class="field tag-only" style="grid-column: span 3"><label for="opp2-name">Opponent’s partner</label><input type="text" id="opp2-name" data-p="opp2.name"></div>
+          <div class="field tag-only solo-lp"><label for="opp2-lp">LP</label><input type="number" id="opp2-lp" min="0" max="99999" step="100" data-p="opp2.lp"></div>
+          <div class="field tag-only"><label for="opp2-hand">Cards in hand</label><input type="number" id="opp2-hand" min="0" max="15" data-p="opp2.cards"></div>
+          <div class="tag-only"></div>
           <div class="field" style="grid-column: span 3"><label for="opp-name">Opponent (top)</label><input type="text" id="opp-name" data-p="opp.name"></div>
           <div class="field"><label for="opp-lp">LP</label><input type="number" id="opp-lp" min="0" max="99999" step="100" data-p="opp.lp"></div>
           <div class="field"><label for="opp-hand">Cards in hand</label><input type="number" id="opp-hand" min="0" max="15" data-p="opp.cards"></div>
@@ -1170,6 +1250,11 @@ details[open] summary { margin-bottom: 8px; }
           <div class="field"><label for="me-lp">LP</label><input type="number" id="me-lp" min="0" max="99999" step="100" data-p="me.lp"></div>
           <div class="field"><label for="me-hand">Cards in hand</label><input type="number" id="me-hand" min="0" max="15" data-p="me.cards"></div>
           <div></div>
+          <div class="field tag-only" style="grid-column: span 3"><label for="me2-name">Hero’s partner</label><input type="text" id="me2-name" data-p="me2.name"></div>
+          <div class="field tag-only solo-lp"><label for="me2-lp">LP</label><input type="number" id="me2-lp" min="0" max="99999" step="100" data-p="me2.lp"></div>
+          <div class="field tag-only"><label for="me2-hand">Cards in hand</label><input type="number" id="me2-hand" min="0" max="15" data-p="me2.cards"></div>
+          <div class="tag-only"></div>
+          <div class="field tag-only" style="grid-column: span 3"><label for="active">Whose turn it is</label><select id="active" data-p="active"></select></div>
           <div class="field"><label for="turn">Turn</label><input type="number" id="turn" min="1" max="999" data-p="turn"></div>
           <div class="field" style="grid-column: span 2"><label for="phase">Phase</label>
             <select id="phase" data-p="phase">
@@ -1257,14 +1342,53 @@ details[open] summary { margin-bottom: 8px; }
     ["field", "mon", "mon", "mon", "mon", "mon", "gy"],
     ["extra", "st", "st", "st", "st", "st", "deck"]
   ];
-  var ROW_CLASS = ["ygo-opp", "ygo-opp", "ygo-mid", "ygo-me", "ygo-me"];
+  /* Rows 5–8 belong to the partners in a Tag Duel: 5–6 the opponent's partner, 7–8 the hero's.
+     With separate fields they're the partners' own halves; with a shared field only their
+     Deck and Extra Deck are used, shown beside their hands. */
+  LAYOUT.push(LAYOUT[0], LAYOUT[1], LAYOUT[3], LAYOUT[4]);
+  var ROW_CLASS = ["ygo-opp", "ygo-opp", "ygo-mid", "ygo-me", "ygo-me", "ygo-opp", "ygo-opp", "ygo-me", "ygo-me"];
+  var MAIN_ROWS = [0, 1, 2, 3, 4], PARTNER_ROWS = { opp2: [5, 6], me2: [7, 8] };
+  /* The four duelists, top of the board first: the opponent’s partner, the opponent, the hero and the hero’s partner. */
+  var DUELISTS = ["opp2", "opp", "me", "me2"];
+  var TEAM = { opp: "opp", opp2: "opp", me: "me", me2: "me" };
   var PILES = ["deck", "extra", "gy"];
   var PILE_LABEL = { deck: "Deck", extra: "Extra", gy: "GY" };
   /* Piles whose cards can be listed for readers (section 16 of the Work Skin). */
   var LISTED = ["gy", "extra"];
   var ROLE_NAME = { deck: "Deck", extra: "Extra Deck", gy: "Graveyard", st: "Spell & Trap Zone", mon: "Monster Zone", field: "Field Zone", emz: "Extra Monster Zone" };
   var roleAt = function (k) { var p = k.split("-"); return LAYOUT[+p[0]][+p[1]]; };
-  var ownerOfRow = function (r) { return r < 2 ? "opp" : r > 2 ? "me" : null; };
+  var ownerOfRow = function (r) { return r < 2 ? "opp" : r === 2 ? null : r < 5 ? "me" : r < 7 ? "opp2" : "me2"; };
+  var isTag = function (s) { return s.mode === "shared" || s.mode === "split"; };
+  /* The duelists on this board, top to bottom. */
+  /* All against all: four duelists, each with their own field and Life Points, and no teams. */
+  var isFfa = function (s) { return s.mode === "ffa"; };
+  var isFour = function (s) { return isTag(s) || isFfa(s); };
+  /* Whether each team's two duelists share one plate and one set of Life Points. */
+  var teamLP = function (s) { return isTag(s) && s.teamLP; };
+  var inPlay = function (s) { return isFour(s) ? DUELISTS : ["opp", "me"]; };
+  /* In all against all, each duelist has a colour of their own: red, purple, blue and gold. */
+  var COLOUR = { opp2: "purple", me2: "gold" };
+  /* A team's name: "Pegasus & Keith" in a Tag Duel, just "Pegasus" otherwise. */
+  var teamName = function (s, team) { return isTag(s) ? s[team].name + " & " + s[team + "2"].name : s[team].name; };
+  /* Whose Life Points a duelist uses: their team's (kept on the first duelist) when the team shares them. */
+  var lpOwner = function (s, who) { return isFour(s) && !teamLP(s) ? who : TEAM[who]; };
+  var lpName = function (s, who) { return teamLP(s) ? teamName(s, TEAM[who]) : s[lpOwner(s, who)].name; };
+  /* A partner's Deck or Extra Deck (their own, even on a shared field). */
+  function pileKey(who, role) {
+    var rows = PARTNER_ROWS[who];
+    for (var i = 0; i < rows.length; i++) { var c = LAYOUT[rows[i]].indexOf(role); if (c >= 0) return rows[i] + "-" + c; }
+    return null;
+  }
+  /* Whether a zone is on the board in this kind of duel. */
+  function zoneShown(s, k) {
+    var r = +k.split("-")[0];
+    if (r < 5 || s.mode === "split" || isFfa(s)) return true;
+    return s.mode === "shared" && (roleAt(k) === "deck" || roleAt(k) === "extra");
+  }
+  /* Who a pile belongs to, for its title: on a shared field the Graveyard is the team's. */
+  function pileOwner(s, r, role) {
+    return s.mode === "shared" && r < 5 && role === "gy" ? teamName(s, ownerOfRow(r)) : s[ownerOfRow(r)].name;
+  }
   var isMonster = function (c) { return c.frame !== "spell" && c.frame !== "trap"; };
 
   function newCard(role) {
@@ -1285,8 +1409,17 @@ details[open] summary { margin-bottom: 8px; }
         else if (["st", "mon", "field", "emz"].indexOf(role) >= 0) zones[k] = { kind: "empty" };
       });
     });
-    return { v: 2, opp: { name: "Opponent", lp: 8000, cards: handOf(5) }, me: { name: "Hero", lp: 8000, cards: handOf(5) }, turn: 1, phase: "DP",
+    return { v: 2, opp: { name: "Opponent", lp: 8000, cards: handOf(5) }, me: { name: "Hero", lp: 8000, cards: handOf(5) },
+      opp2: { name: "Opponent’s partner", lp: 8000, cards: handOf(5) }, me2: { name: "Hero’s partner", lp: 8000, cards: handOf(5) },
+      mode: "single", teamLP: true, active: "me", turn: 1, phase: "DP",
       showInfo: true, zones: zones, log: { text: "⚔ Attack!", who: "opp", delta: -1000 } };
+  }
+  /* Boards saved before Tag Duels existed get the partners and their zones. */
+  function upgrade(s) {
+    var e = emptyState();
+    ["opp2", "me2", "mode", "teamLP", "active"].forEach(function (f) { if (s[f] == null) s[f] = e[f]; });
+    Object.keys(e.zones).forEach(function (k) { if (!s.zones[k]) s.zones[k] = e.zones[k]; });
+    return s;
   }
 
   function exampleState() {
@@ -1343,11 +1476,15 @@ details[open] summary { margin-bottom: 8px; }
     return "Monster";
   }
 
-  function plateHTML(p, side) {
-    return ['<div class="ygo-bar' + (side === "opp" ? " ygo-bar-opp" : "") + '"><div class="ygo-plate ygo-plate-' + side + '">',
-      '<span class="ygo-pname">' + esc(p.name) + "</span>",
-      '<span class="ygo-lp"><span class="ygo-lp-tag">LP</span> <span class="ygo-lp-num">' + p.lp + "</span></span>",
-      '<span class="ygo-lp-track"><span class="ygo-lp-fill ' + lpClass(p.lp) + '">&nbsp;</span></span>',
+  /* A name plate. When a Tag Duel team shares its Life Points, one plate carries both names;
+     otherwise a partner's plate is marked ygo-p2. */
+  function plateHTML(s, who) {
+    var team = TEAM[who], shared = teamLP(s), lp = s[shared ? team : who].lp;
+    var name = shared ? '<span class="ygo-pn">' + esc(s[team].name) + '</span> &amp; <span class="ygo-pn">' + esc(s[team + "2"].name) + "</span>" : esc(s[who].name);
+    return ['<div class="ygo-bar' + (team === "opp" ? " ygo-bar-opp" : "") + '"><div class="ygo-plate ygo-plate-' + team + (who !== team && !shared ? " ygo-p2" : "") + (isFfa(s) && COLOUR[who] ? " ygo-plate-" + COLOUR[who] : "") + '">',
+      '<span class="ygo-pname">' + name + "</span>",
+      '<span class="ygo-lp"><span class="ygo-lp-tag">LP</span> <span class="ygo-lp-num">' + lp + "</span></span>",
+      '<span class="ygo-lp-track"><span class="ygo-lp-fill ' + lpClass(lp) + '">&nbsp;</span></span>',
       "</div></div>"].join("\n");
   }
   /* One card in a hand: a small back, or a face-up card when revealed.
@@ -1365,14 +1502,27 @@ details[open] summary { margin-bottom: 8px; }
     L.push("</div>");
     return L.join("\n");
   }
-  function handHTML(p, side, preview, sel) {
-    var L = ['<div class="ygo-hand">'];
+  /* A duelist's hand. In a Tag Duel the label names the duelist and marks whose turn it is,
+     and on a shared field a partner's own Deck and Extra Deck sit at the end of their hand. */
+  function handHTML(s, who, preview, sel) {
+    var team = TEAM[who], tag = isFour(s), p = s[who];
+    var L = ['<div class="ygo-hand ygo-hand-' + team + (who !== team ? " ygo-p2" : "") + '">'];
     p.cards.forEach(function (c, i) {
-      var k = "h-" + side + "-" + i;
+      var k = "h-" + who + "-" + i;
       L.push(miniHTML(c, preview ? ' data-h="' + k + '" tabindex="0"' : "", preview && sel === k ? " is-sel" : ""));
     });
-    L.push('<span class="ygo-hand-label">Hand: ' + p.cards.length + "</span>", "</div>");
+    if (s.mode === "shared" && who !== team) ["deck", "extra"].forEach(function (role) { L.push(miniPileHTML(s, pileKey(who, role), preview, sel)); });
+    var act = tag && s.active === who;
+    L.push('<span class="ygo-hand-label' + (act ? " ygo-hand-act" : "") + '">' + (act ? "▶ " : "") +
+      (tag ? '<span class="ygo-hname">' + esc(p.name) + "</span> · " : "") + "Hand: " + p.cards.length + "</span>", "</div>");
     return L.join("\n");
+  }
+  /* A partner's Deck or Extra Deck, as a small pile beside their hand. */
+  function miniPileHTML(s, k, preview, sel) {
+    var role = roleAt(k), z = s.zones[k], list = role === "extra" && z.list || [], count = Math.max(z.count, list.length);
+    return '<div class="ygo-mini ygo-back ygo-mini-pile ygo-mpile-' + role + (preview && sel === k ? " is-sel" : "") + '"' +
+      (preview ? ' data-z="' + k + '" tabindex="0"' : "") + '><span class="ygo-count">' + count + '</span> <span class="ygo-plabel">' + PILE_LABEL[role] + "</span>" +
+      (list.length ? "\n" + gyPanelHTML(list, count, s[ownerOfRow(+k.split("-")[0])].name, role) + "\n" : "") + "</div>";
   }
   function spotHTML(c, hover) {
     var L = ['<div class="ygo-spot' + (hover ? " ygo-hover" : "") + '">'];
@@ -1396,7 +1546,7 @@ details[open] summary { margin-bottom: 8px; }
     L.push("</div>");
     return L.join("\n");
   }
-  function cardHTML(c, role) {
+  function cardHTML(c, role, s) {
     var monZone = role === "mon" || role === "emz";
     if (c.faceDown) return '<div class="ygo-card ygo-back' + (monZone && isMonster(c) ? " ygo-def" : "") + '">&nbsp;</div>';
     var def = monZone && isMonster(c) && c.frame !== "link" && c.pos === "def";
@@ -1404,7 +1554,10 @@ details[open] summary { margin-bottom: 8px; }
     var cls = ["ygo-card", "ygo-" + c.frame];
     if (pic) cls.push("ygo-pic");
     if (def) cls.push("ygo-def");
-    if (role === "emz") cls.push(c.owner === "opp" ? "ygo-theirs" : "ygo-mine");
+    if (role === "emz") { /* whose card it is: a ring in its duelist's (or team's) colour */
+      var ow = s && isFfa(s) ? c.owner : TEAM[c.owner] || "me";
+      cls.push(COLOUR[ow] ? "ygo-ring-" + COLOUR[ow] : ow === "opp" ? "ygo-theirs" : "ygo-mine");
+    }
     if (c.glow) cls.push("ygo-focus");
     var sp = statsPair(c);
     var L = ['<div class="' + cls.join(" ") + '">'];
@@ -1443,10 +1596,10 @@ details[open] summary { margin-bottom: 8px; }
       var top = role === "gy" && list.length ? list[0].frame : z.top; /* the Extra Deck stays face-down */
       inner = count > 0
         ? '<div class="ygo-card ' + (top === "back" ? "ygo-back" : "ygo-" + top) + ' ygo-pile"><span class="ygo-count">' + count + '</span> <span class="ygo-plabel">' + PILE_LABEL[role] + "</span>" +
-          (list.length ? "\n" + gyPanelHTML(list, count, s[ownerOfRow(r)].name, role) + "\n" : "") + "</div>"
+          (list.length ? "\n" + gyPanelHTML(list, count, pileOwner(s, r, role), role) + "\n" : "") + "</div>"
         : '<div class="ygo-zone">' + PILE_LABEL[role] + "</div>";
     } else {
-      inner = z.kind === "card" ? cardHTML(z.card, role) : '<div class="ygo-zone">' + (role === "field" ? "Field" : "&nbsp;") + "</div>";
+      inner = z.kind === "card" ? cardHTML(z.card, role, s) : '<div class="ygo-zone">' + (role === "field" ? "Field" : "&nbsp;") + "</div>";
     }
     var attrs = "";
     if (preview && role !== "blank") attrs = ' data-z="' + k + '" tabindex="0"' + (sel === k ? ' class="is-sel"' : "");
@@ -1454,30 +1607,50 @@ details[open] summary { margin-bottom: 8px; }
   }
   /* Every card readers can see: face-up cards on the field and revealed cards in hands. */
   function eachCard(s, fn) {
-    Object.keys(s.zones).forEach(function (k) { var z = s.zones[k]; if (z.kind === "card" && z.card && !z.card.faceDown) fn(z.card, k); });
-    ["opp", "me"].forEach(function (side) { s[side].cards.forEach(function (c) { if (c.revealed) fn(c); }); });
+    Object.keys(s.zones).forEach(function (k) { var z = s.zones[k]; if (z.kind === "card" && z.card && !z.card.faceDown && zoneShown(s, k)) fn(z.card, k); });
+    inPlay(s).forEach(function (who) { s[who].cards.forEach(function (c) { if (c.revealed) fn(c); }); });
   }
   /* Every card, hidden ones too (used to make sure only one card glows). */
   function allCards(s, fn) {
     Object.keys(s.zones).forEach(function (k) { var z = s.zones[k]; if (z.card) fn(z.card); });
-    ["opp", "me"].forEach(function (side) { s[side].cards.forEach(fn); });
+    DUELISTS.forEach(function (who) { s[who].cards.forEach(fn); });
   }
   function glowCard(s) { var g = null; eachCard(s, function (c) { if (c.glow && !g) g = c; }); return g; }
   function anyHover(s) {
     var h = false; eachCard(s, function (c) { if (c.hover && !c.glow) h = true; });
     /* A pile's card list is a hover panel too. */
-    Object.keys(s.zones).forEach(function (k) { if (LISTED.indexOf(roleAt(k)) >= 0 && s.zones[k].list && s.zones[k].list.length) h = true; });
+    Object.keys(s.zones).forEach(function (k) { if (LISTED.indexOf(roleAt(k)) >= 0 && s.zones[k].list && s.zones[k].list.length && zoneShown(s, k)) h = true; });
     return h;
   }
 
-  function boardHTML(s, preview, sel) {
-    var L = ['<div class="ygo-duel">', plateHTML(s.opp, "opp"), handHTML(s.opp, "opp", preview, sel), '<div class="ygo-scroll"><table class="ygo-field">'];
-    for (var r = 0; r < 5; r++) {
-      L.push('<tr class="' + ROW_CLASS[r] + '">');
+  /* One field mat. Partners' own halves (separate fields) are extra mats marked ygo-field-p2. */
+  function fieldHTML(s, rows, cls, preview, sel) {
+    var colour = function (r) { var who = ownerOfRow(r); return isFfa(s) && COLOUR[who] ? " ygo-" + COLOUR[who] : ""; };
+    var L = ['<div class="ygo-scroll"><table class="ygo-field' + (cls ? " " + cls : "") + '">'];
+    rows.forEach(function (r) {
+      L.push('<tr class="' + ROW_CLASS[r] + colour(r) + '">');
       for (var c = 0; c < 7; c++) L.push(cellHTML(s, r, c, preview, sel));
       L.push("</tr>");
+    });
+    L.push("</table></div>");
+    return L.join("\n");
+  }
+  /* Top to bottom: the opponent's team, the field, the hero's team. In a Tag Duel each partner
+     sits on the outside, and a team that shares its Life Points has one plate on the outer edge. */
+  function boardHTML(s, preview, sel) {
+    var tag = isFour(s), split = s.mode === "split" || isFfa(s), team = teamLP(s);
+    var L = ['<div class="ygo-duel' + (isFfa(s) ? " ygo-ffa" : tag ? " ygo-tag ygo-tag-" + s.mode + (team ? " ygo-tag-team" : "") : "") + '">'];
+    var hand = function (who) { return handHTML(s, who, preview, sel); };
+    if (!tag) L.push(plateHTML(s, "opp"), hand("opp"), fieldHTML(s, MAIN_ROWS, "", preview, sel), hand("me"), plateHTML(s, "me"));
+    else {
+      L.push(plateHTML(s, team ? "opp" : "opp2"), hand("opp2"));
+      if (split) L.push(fieldHTML(s, PARTNER_ROWS.opp2, "ygo-field-p2", preview, sel));
+      if (!team) L.push(plateHTML(s, "opp"));
+      L.push(hand("opp"), fieldHTML(s, MAIN_ROWS, "", preview, sel), hand("me"));
+      if (!team) L.push(plateHTML(s, "me"));
+      if (split) L.push(fieldHTML(s, PARTNER_ROWS.me2, "ygo-field-p2", preview, sel));
+      L.push(hand("me2"), plateHTML(s, team ? "me" : "me2"));
     }
-    L.push("</table></div>", handHTML(s.me, "me", preview, sel), plateHTML(s.me, "me"));
     if (s.showInfo) {
       var g = glowCard(s);
       if (g) L.push(spotHTML(g, false));
@@ -1487,14 +1660,14 @@ details[open] summary { margin-bottom: 8px; }
     return L.join("\n");
   }
   function logResult(s) {
-    var p = s[s.log.who] || s.opp, d = Number(s.log.delta) || 0;
-    return { p: p, before: p.lp, after: Math.max(0, p.lp + d), d: d };
+    var who = TEAM[s.log.who] ? s.log.who : "opp", p = s[lpOwner(s, who)], d = Number(s.log.delta) || 0;
+    return { p: p, name: lpName(s, who), before: p.lp, after: Math.max(0, p.lp + d), d: d };
   }
   function logHTML(s) {
     var x = logResult(s);
     return ['<div class="ygo-log' + (x.d > 0 ? " ygo-log-heal" : "") + '">',
       '<span class="ygo-log-act">' + esc(s.log.text) + "</span>",
-      esc(x.p.name) + " LP " + x.before + " → " + x.after + ' <span class="ygo-delta">' + (x.d < 0 ? "−" : "+") + Math.abs(x.d) + "</span>",
+      esc(x.name) + " LP " + x.before + " → " + x.after + ' <span class="ygo-delta">' + (x.d < 0 ? "−" : "+") + Math.abs(x.d) + "</span>",
       "</div>"].join("\n");
   }
 
@@ -1521,7 +1694,7 @@ details[open] summary { margin-bottom: 8px; }
     if (el.classList.contains("ygo-back")) { c.faceDown = true; c.frame = role === "mon" || role === "emz" ? "effect" : "spell"; return c; }
     c.frame = frameOf(el) || "effect";
     c.pos = el.classList.contains("ygo-def") ? "def" : "atk";
-    c.owner = el.classList.contains("ygo-theirs") ? "opp" : "me";
+    c.owner = el.classList.contains("ygo-theirs") ? "opp" : el.classList.contains("ygo-ring-purple") ? "opp2" : el.classList.contains("ygo-ring-gold") ? "me2" : "me";
     c.glow = el.classList.contains("ygo-focus");
     c.usePic = el.classList.contains("ygo-pic");
     var picImg = null;
@@ -1563,42 +1736,72 @@ details[open] summary { margin-bottom: 8px; }
     if (hv) fillFromSpot(c, hv);
     return c;
   }
-  function parseBoard(html) {
-    var doc = new DOMParser().parseFromString(html, "text/html");
-    var duel = doc.querySelector(".ygo-duel");
-    var rows = duel ? duel.querySelectorAll(".ygo-field tr") : [];
-    if (!duel || rows.length < 5) throw new Error("not a board");
-    var s = emptyState();
-    [["opp", ".ygo-plate-opp"], ["me", ".ygo-plate-me"]].forEach(function (p) {
-      var el = duel.querySelector(p[1]); if (!el) return;
-      s[p[0]].name = txt(el.querySelector(".ygo-pname")) || s[p[0]].name;
-      s[p[0]].lp = clampInt(txt(el.querySelector(".ygo-lp-num")), 0, 99999);
+  /* A pile (on the field, or beside a partner's hand) and its card list. p = null: an empty zone. */
+  function parsePile(p, role) {
+    var z = p ? { count: clampInt(txt(p.querySelector(".ygo-count")), 0, 99), top: p.classList.contains("ygo-back") ? "back" : frameOf(p) || "normal" }
+      : { count: 0, top: role === "gy" ? "normal" : "back" };
+    if (p && LISTED.indexOf(role) >= 0) z.list = Array.prototype.map.call(p.querySelectorAll(".ygo-gy-card"), function (el) {
+      var im = el.querySelector("img");
+      return { name: txt(el.querySelector(".ygo-gy-name")) || (im ? im.getAttribute("alt") || "" : ""), frame: frameOf(el) || "normal", img: im ? im.getAttribute("src") || "" : "" };
     });
-    var hands = duel.querySelectorAll(".ygo-hand");
-    [["opp", hands[0]], ["me", hands[1]]].forEach(function (h) {
-      if (h[1]) s[h[0]].cards = Array.prototype.map.call(h[1].querySelectorAll(".ygo-mini"), parseMini);
-    });
-    for (var r = 0; r < 5; r++) {
-      var cells = rows[r].querySelectorAll(":scope > td");
+    return z;
+  }
+  /* Reads one field mat's rows into the zones of the given LAYOUT rows. */
+  function parseRows(s, trs, rowNums) {
+    rowNums.forEach(function (r, i) {
+      if (!trs[i]) return;
+      var cells = trs[i].querySelectorAll(":scope > td");
       for (var c = 0; c < 7 && c < cells.length; c++) {
         var td = cells[c], role = LAYOUT[r][c], k = r + "-" + c;
         if (role === "blank") continue;
         if (role === "phase") { s.phase = txt(td) || "MP1"; continue; }
         if (role === "turn") { s.turn = clampInt(txt(td.querySelector(".ygo-turn-n")), 1, 999); continue; }
-        if (PILES.indexOf(role) >= 0) {
-          var p = td.querySelector(".ygo-pile");
-          s.zones[k] = p ? { count: clampInt(txt(p.querySelector(".ygo-count")), 0, 99), top: p.classList.contains("ygo-back") ? "back" : frameOf(p) || "normal" }
-            : { count: 0, top: role === "gy" ? "normal" : "back" };
-          if (p && LISTED.indexOf(role) >= 0) s.zones[k].list = Array.prototype.map.call(p.querySelectorAll(".ygo-gy-card"), function (el) {
-            var im = el.querySelector("img");
-            return { name: txt(el.querySelector(".ygo-gy-name")) || (im ? im.getAttribute("alt") || "" : ""), frame: frameOf(el) || "normal", img: im ? im.getAttribute("src") || "" : "" };
-          });
-          continue;
-        }
+        if (PILES.indexOf(role) >= 0) { s.zones[k] = parsePile(td.querySelector(".ygo-pile"), role); continue; }
         var card = td.querySelector(".ygo-card");
         s.zones[k] = card ? { kind: "card", card: parseCard(card, role) } : { kind: "empty" };
       }
-    }
+    });
+  }
+  function parseBoard(html) {
+    var doc = new DOMParser().parseFromString(html, "text/html");
+    var duel = doc.querySelector(".ygo-duel");
+    var main = duel ? duel.querySelector(".ygo-field:not(.ygo-field-p2)") : null;
+    var rows = main ? main.querySelectorAll("tr") : [];
+    if (!duel || rows.length < 5) throw new Error("not a board");
+    var s = emptyState(), cl = duel.classList;
+    s.mode = cl.contains("ygo-ffa") ? "ffa" : cl.contains("ygo-tag-split") ? "split" : cl.contains("ygo-tag-shared") ? "shared" : "single";
+    s.teamLP = isTag(s) ? cl.contains("ygo-tag-team") : true;
+    var setLP = function (who, el) { s[who].lp = clampInt(txt(el.querySelector(".ygo-lp-num")), 0, 99999); };
+    ["opp", "me"].forEach(function (team) {
+      var plates = duel.querySelectorAll(".ygo-plate-" + team);
+      Array.prototype.forEach.call(plates, function (el) {
+        var names = el.querySelectorAll(".ygo-pn");
+        if (names.length === 2) { /* a team plate: both names, one set of Life Points */
+          s[team].name = txt(names[0]) || s[team].name; s[team + "2"].name = txt(names[1]) || s[team + "2"].name;
+          setLP(team, el); s[team + "2"].lp = s[team].lp;
+          return;
+        }
+        var who = el.classList.contains("ygo-p2") ? team + "2" : team;
+        s[who].name = txt(el.querySelector(".ygo-pname")) || s[who].name;
+        setLP(who, el);
+      });
+    });
+    /* Hands: marked with their team (and ygo-p2 for a partner); boards made before Tag Duels just have two, in order. */
+    var hands = duel.querySelectorAll(".ygo-hand"), marked = duel.querySelector(".ygo-hand-opp, .ygo-hand-me");
+    Array.prototype.forEach.call(hands, function (h, i) {
+      var who = marked ? (h.classList.contains("ygo-hand-opp") ? "opp" : "me") + (h.classList.contains("ygo-p2") ? "2" : "") : i === 0 ? "opp" : "me";
+      s[who].cards = Array.prototype.map.call(h.querySelectorAll(".ygo-mini:not(.ygo-mini-pile)"), parseMini);
+      var hn = h.querySelector(".ygo-hname"); if (hn && txt(hn)) s[who].name = txt(hn);
+      if (h.querySelector(".ygo-hand-act")) s.active = who;
+      ["deck", "extra"].forEach(function (role) {
+        var mp = h.querySelector(".ygo-mpile-" + role);
+        if (mp && PARTNER_ROWS[who]) s.zones[pileKey(who, role)] = parsePile(mp, role);
+      });
+    });
+    parseRows(s, rows, MAIN_ROWS);
+    var mats = duel.querySelectorAll(".ygo-field-p2");
+    if (mats[0]) parseRows(s, mats[0].querySelectorAll("tr"), PARTNER_ROWS.opp2);
+    if (mats[1]) parseRows(s, mats[1].querySelectorAll("tr"), PARTNER_ROWS.me2);
     var spot = null;
     Array.prototype.forEach.call(duel.querySelectorAll(".ygo-spot"), function (el) { if (!spot && !el.classList.contains("ygo-hover")) spot = el; });
     s.showInfo = !!spot;
@@ -1617,6 +1820,7 @@ details[open] summary { margin-bottom: 8px; }
     state.v = 2;
   }
   if (!state || state.v !== 2 || !state.zones) state = exampleState();
+  upgrade(state);
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: keep working without it */ } }
 
   /* ---------- Rendering ---------- */
@@ -1634,15 +1838,46 @@ details[open] summary { margin-bottom: 8px; }
   }
 
   function fillSideInputs() {
-    $("#opp-name").value = state.opp.name; $("#opp-lp").value = state.opp.lp; $("#opp-hand").value = state.opp.cards.length;
-    $("#me-name").value = state.me.name; $("#me-lp").value = state.me.lp; $("#me-hand").value = state.me.cards.length;
+    DUELISTS.forEach(function (who) {
+      $("#" + who + "-name").value = state[who].name; $("#" + who + "-lp").value = state[who].lp; $("#" + who + "-hand").value = state[who].cards.length;
+    });
+    $("#mode").value = state.mode; $("#shared-life").checked = state.teamLP;
     $("#turn").value = state.turn; $("#phase").value = state.phase; $("#show-info").checked = state.showInfo;
     $("#log-text").value = state.log.text; $("#log-delta").value = state.log.delta;
+    syncTagUI();
+  }
+  /* What each duelist is called in the form, top of the board first. */
+  var FORM_NAMES = {
+    single: { opp: "Opponent (top)", me: "Hero (bottom)" },
+    tag: { opp2: "Opponent’s partner (top)", opp: "Opponent", me: "Hero", me2: "Hero’s partner (bottom)" },
+    ffa: { opp2: "1st duelist (top)", opp: "2nd duelist", me: "3rd duelist", me2: "4th duelist (bottom)" }
+  };
+  /* Shows the other two duelists only with four on the board, their LP only when they have
+     their own, and the shared-LP switch only in a Tag Duel. */
+  function syncTagUI() {
+    var four = isFour(state), names = FORM_NAMES[isFfa(state) ? "ffa" : four ? "tag" : "single"];
+    Array.prototype.forEach.call(document.querySelectorAll(".tag-only"), function (el) { el.hidden = !four; });
+    Array.prototype.forEach.call(document.querySelectorAll(".team-only"), function (el) { el.hidden = !isTag(state); });
+    Array.prototype.forEach.call(document.querySelectorAll(".solo-lp"), function (el) { el.hidden = !four || teamLP(state); });
+    ["opp", "me"].forEach(function (team) { $('label[for="' + team + '-lp"]').textContent = teamLP(state) ? "Team LP" : "LP"; });
+    inPlay(state).forEach(function (who) { $('label[for="' + who + '-name"]').textContent = names[who]; });
+    $("#tag-note").textContent = !four ? "" : state.mode === "shared"
+      ? "Each team shares one field and Graveyard. The partners on the outside keep their own Deck and Extra Deck, shown beside their hands."
+      : state.mode === "split" ? "Every duelist has their own field. The partners’ fields sit on the outside, above and below the main field."
+      : "Every duelist has their own field and Life Points, and a colour of their own: purple, red, blue and gold, top to bottom.";
+    $("#active").innerHTML = opt(DUELISTS.map(function (who) { return [who, state[who].name]; }), state.active);
     fillLogWho();
   }
   function fillLogWho() {
-    $("#log-who").innerHTML = '<option value="opp">' + esc(state.opp.name) + '</option><option value="me">' + esc(state.me.name) + "</option>";
-    $("#log-who").value = state.log.who;
+    var whos = isFour(state) && !teamLP(state) ? DUELISTS : ["opp", "me"];
+    if (whos.indexOf(state.log.who) < 0) state.log.who = TEAM[state.log.who] || "opp";
+    $("#log-who").innerHTML = opt(whos.map(function (who) { return [who, lpName(state, who)]; }), state.log.who);
+  }
+  /* Drops the selection when its zone or hand card isn't on the board any more. */
+  function checkSel() {
+    if (!sel) return;
+    var gone = isHandKey(sel) ? !target() || inPlay(state).indexOf(sel.split("-")[1]) < 0 : !zoneShown(state, sel);
+    if (gone) { sel = null; lookupMsg = ""; renderEditor(); }
   }
 
   /* ---------- Zone editor ---------- */
@@ -1671,7 +1906,7 @@ details[open] summary { margin-bottom: 8px; }
     if (isHandKey(k)) { var t = target(); return state[t.side].name + "’s hand, card " + (t.i + 1) + " of " + state[t.side].cards.length; }
     var p = k.split("-"), r = +p[0], c = +p[1], role = LAYOUT[r][c];
     if (role === "emz") return "Extra Monster Zone (" + (c === 2 ? "left" : "right") + ")";
-    var who = state[ownerOfRow(r)].name;
+    var who = PILES.indexOf(role) >= 0 ? pileOwner(state, r, role) : state.mode === "shared" ? teamName(state, ownerOfRow(r)) : state[ownerOfRow(r)].name;
     return who + "’s " + ROLE_NAME[role] + (role === "st" || role === "mon" ? " " + c : "");
   }
 
@@ -1806,7 +2041,8 @@ details[open] summary { margin-bottom: 8px; }
       check("f-hover", "hover", c.hover, "Swap the info panel to this card when pointed at") +
       check("f-glow", "glow", c.glow, "Highlight this card (golden glow; the info panel shows it)") + "</div>";
     if (role === "emz") h += '<div class="field"><label for="f-owner">Belongs to</label><select id="f-owner" data-f="owner">' +
-      opt([["me", state.me.name], ["opp", state.opp.name]], c.owner) + "</select></div>";
+      (isFfa(state) ? opt(DUELISTS.map(function (who) { return [who, state[who].name]; }), c.owner)
+        : opt([["me", teamName(state, "me")], ["opp", teamName(state, "opp")]], TEAM[c.owner] || "me")) + "</select></div>";
     if (t.hand) {
       var last = state[t.side].cards.length - 1;
       h += '<div class="code-bar">' +
@@ -2058,9 +2294,15 @@ details[open] summary { margin-bottom: 8px; }
         while (cards.length < n) cards.push(newHandCard());
         cards.length = n;
         if (sel && isHandKey(sel) && !target()) { sel = null; renderEditor(); }
-      } else if (path.length === 2) state[path[0]][path[1]] = v; else state[path[0]] = v;
+      } else if (path.length === 2) state[path[0]][path[1]] = v; else {
+        /* Moving into a Tag Duel from another kind of duel starts with that kind's usual Life Points:
+           shared per team on a shared field (official rules), one each on separate fields (anime). */
+        if (el.id === "mode" && !isTag(state)) state.teamLP = v === "shared";
+        state[path[0]] = v;
+      }
       render();
-      if (/name$/.test(el.id)) { fillLogWho(); if (sel) renderEditor(); }
+      if (el.id === "mode" || el.id === "shared-life") { fillSideInputs(); checkSel(); if (sel) renderEditor(); }
+      if (/name$/.test(el.id)) { syncTagUI(); if (sel) renderEditor(); }
     });
   });
   Array.prototype.forEach.call(document.querySelectorAll("[data-l]"), function (el) {
@@ -2076,7 +2318,7 @@ details[open] summary { margin-bottom: 8px; }
   /* A clicked hand card or field zone opens in the editor. */
   function clickTarget(el) {
     var h = el.closest && el.closest("[data-h]"); if (h) return h.dataset.h;
-    var td = el.closest && el.closest("td[data-z]"); return td ? td.dataset.z : null;
+    var z = el.closest && el.closest("[data-z]"); return z ? z.dataset.z : null;
   }
   preview.addEventListener("click", function (e) { var k = clickTarget(e.target); if (k) pick(k); });
   preview.addEventListener("keydown", function (e) {
@@ -2090,7 +2332,7 @@ details[open] summary { margin-bottom: 8px; }
     }
     sel = k; lookupMsg = ""; gyDraft = "";
     render(); renderEditor();
-    var again = preview.querySelector(isHandKey(k) ? '[data-h="' + k + '"]' : 'td[data-z="' + k + '"]');
+    var again = preview.querySelector(isHandKey(k) ? '[data-h="' + k + '"]' : '[data-z="' + k + '"]');
     if (again) again.focus({ preventScroll: true });
     if (window.matchMedia("(max-width: 900px)").matches) $("#zone-panel").scrollIntoView({ behavior: "smooth", block: "start" });
   }
