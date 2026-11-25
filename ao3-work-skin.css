@@ -852,3 +852,64 @@
 .ygo-gy-card.ygo-xyz .ygo-gy-name, .ygo-gy-card.ygo-link .ygo-gy-name { background: rgba(0, 0, 0, 0.4); color: #f1f1f1; }
 /* No picture: the name fills a tile as tall as a picture tile. */
 .ygo-gy-text .ygo-gy-name { height: 14.3em; margin-top: 0; }
+
+/* =====================================================================
+   17. TAG DUELS (optional)
+   Two against two. Add ygo-tag to the board, plus ygo-tag-shared (each
+   team shares one field and Graveyard) or ygo-tag-split (every duelist
+   has their own field), and ygo-tag-team if each team shares its Life
+   Points. Each partner sits on the outside of their team:
+   - A partner's hand and plate get ygo-p2 next to their team's class:
+       <div class="ygo-hand ygo-hand-opp ygo-p2">
+   - A team that shares its Life Points has one plate with both names:
+       <span class="ygo-pname"><span class="ygo-pn">Pegasus</span> &amp; <span class="ygo-pn">Keith</span></span>
+   - Each hand label names its duelist (ygo-hname). ygo-hand-act turns
+     it gold for the duelist whose turn it is:
+       <span class="ygo-hand-label ygo-hand-act">▶ <span class="ygo-hname">Yugi</span> · Hand: 5</span>
+   - Shared field: a partner's own Deck and Extra Deck are small piles
+     at the end of their hand. An Extra Deck list (section 16) works
+     inside one, as on the field:
+       <div class="ygo-mini ygo-back ygo-mini-pile ygo-mpile-deck"><span class="ygo-count">30</span> <span class="ygo-plabel">Deck</span></div>
+   - Separate fields: a partner's half of the field is a second field
+     table with ygo-field-p2, holding just their two rows.
+   ===================================================================== */
+/* Section 15 opens pop-ups upward in any hand that comes after a field.
+   With separate fields the opponent's hand comes after their partner's
+   field, so the opponents' hands keep opening downward. */
+.ygo-duel .ygo-hand-opp .ygo-pop { margin-top: 0.8em; }
+/* A partner's small piles: the size of a face-up hand card, with the
+   same stacked-card shadow as the piles on the field. */
+.ygo-mini.ygo-mini-pile {
+  width: 3em;
+  height: 4.4em;
+  margin: 0 0.15em 0.2em;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0.1em 0.12em 0 #2a1a0e, 0.2em 0.24em 0 #1d120a;
+}
+.ygo-mini-pile:hover { outline: 2px solid #fff36b; }
+.ygo-mini-pile .ygo-count { margin-top: 0.5em; font-size: 1.5em; }
+.ygo-mini-pile .ygo-plabel { margin-top: 0.15em; font-size: 0.55em; }
+/* The hand label of the duelist whose turn it is: gold, with dark text. */
+.ygo-hand-act { background: #ffd84a; color: #3a2400; }
+/* A name stays on one line in a two-name plate. */
+.ygo-pn { white-space: nowrap; }
+
+/* =====================================================================
+   18. ALL AGAINST ALL (optional)
+   Four duelists, each on their own. The board is laid out like a Tag
+   Duel with separate fields (section 17), with ygo-ffa on the board in
+   place of the ygo-tag classes. Each duelist gets a colour of their own,
+   top to bottom: purple, red, blue, gold. The red and blue duelists use
+   the usual classes; the outer two add a colour class:
+   - on their plate:      <div class="ygo-plate ygo-plate-opp ygo-p2 ygo-plate-purple">
+   - on their field rows: <tr class="ygo-opp ygo-purple">
+   - on their Extra Monster Zone card, in place of ygo-mine / ygo-theirs:
+     ygo-ring-purple or ygo-ring-gold
+   ===================================================================== */
+.ygo-plate-purple { background: #3a1f4d; border-color: #b06ad9; }
+.ygo-plate-gold { background: #4a3810; border-color: #e0b040; }
+.ygo-purple .ygo-zone { border-color: #bb8ae6; background: rgba(225, 195, 255, 0.18); }
+.ygo-gold .ygo-zone { border-color: #e8c25a; background: rgba(255, 232, 170, 0.18); }
+.ygo-ring-purple { box-shadow: 0 0 0 0.2em #b06ad9, 0 0.15em 0.3em rgba(0, 0, 0, 0.5); }
+.ygo-ring-gold { box-shadow: 0 0 0 0.2em #e0b040, 0 0.15em 0.3em rgba(0, 0, 0, 0.5); }
